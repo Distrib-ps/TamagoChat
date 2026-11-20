@@ -1,0 +1,12 @@
+.venv/
+dist/
+build/
+__pycache__/
+*.spec
+*.pyc
+# secrets / données du serveur : ne jamais publier
+*.key
+serveur/config.json
+serveur/*.db*
+serveur/releases/
+local_config.py

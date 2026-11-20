@@ -1,0 +1,20 @@
+[Unit]
+Description=Serveur TamagoChat (messages et mises a jour des chats)
+After=network.target
+
+[Service]
+User=minou
+Group=minou
+WorkingDirectory=/opt/minou-server
+ExecStart=/opt/minou-server/venv/bin/python /opt/minou-server/server.py
+Restart=always
+RestartSec=3
+MemoryMax=150M
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/minou-server
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
