@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -49,6 +50,13 @@ def run(cmd):
 def main():
     src = open(SOURCE, encoding="utf-8").read()
     current = re.search(r'^APP_VERSION = "([\d.]+)"', src, re.M).group(1)
+    try:    # une version a peut-être été publiée depuis GitHub (bouton « Déployer » de l'admin)
+        with urllib.request.urlopen(cfg.SERVER_URL.rstrip("/") + "/api/latest", timeout=15) as r:
+            upd = json.load(r).get("update")
+        if upd and vt(upd["version"]) > vt(current):
+            current = upd["version"]
+    except Exception as e:
+        print(f"(version publiée inconnue : {e})")
     pubkey = cfg.UPDATE_PUBKEY
     if len(sys.argv) > 1:
         new = sys.argv[1].lstrip("v")

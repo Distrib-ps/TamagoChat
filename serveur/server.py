@@ -29,6 +29,11 @@ STAT_KEYS = ("satiete", "hydratation", "bonheur", "energie")
 ACTIONS = ("crazy", "flies", "sleep", "wake", "pet", "feed", "drink", "play", "meow",
            "crazy_xl", "swarm", "love", "jump", "drop", "screen", "mouse", "hide")
 SIZES = ("Petit", "Moyen", "Grand")
+VERSION_RE = re.compile(r"\d+(\.\d+){1,3}")
+MAX_RELEASE = 100 * 1024 * 1024
+KEEP_RELEASES = 5
+GITHUB_API = "https://api.github.com"
+WORKFLOW = "release.yml"
 MAX_PHRASES_JSON = 200_000
 HEX32 = re.compile(r"^[0-9a-f]{32}$")
 RELEASE_RE = re.compile(r"^(Minou|TamagoChat)-\d+(\.\d+){1,3}\.exe$")
@@ -73,13 +78,19 @@ def hash_password(pw, salt_hex):
     return hashlib.scrypt(pw.encode(), salt=bytes.fromhex(salt_hex), n=2 ** 14, r=8, p=1).hex()
 
 
+def save_config(cfg):
+    tmp = CONFIG_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(cfg, f)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, CONFIG_PATH)
+
+
 def set_password(pw):
     salt = secrets.token_hex(16)
     cfg = load_config()
     cfg.update(admin_salt=salt, admin_hash=hash_password(pw, salt))
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cfg, f)
-    os.chmod(CONFIG_PATH, 0o600)
+    save_config(cfg)
     con = db_connect()
     con.execute("DELETE FROM sessions")   # déconnecte les sessions existantes
     con.commit()
@@ -91,6 +102,10 @@ def sha256(s):
 
 def clip(v, n):
     return str(v if v is not None else "")[:n]
+
+
+def version_tuple(v):
+    return tuple(int(x) for x in str(v).split(".") if x.isdigit())
 
 
 def is_int(v, lo, hi):
@@ -138,6 +153,7 @@ def clean_phrases(p):
 
 # ---------------------------------------------------------------------------- serveur
 def main():
+    import aiohttp
     from aiohttp import web
 
     db = db_connect()
@@ -161,7 +177,7 @@ def main():
                 release_cache["data"] = {
                     "version": rel["version"], "url": "/download/" + rel["file"],
                     "sha256": rel["sha256"], "size": rel["size"], "sig": rel["sig"],
-                    "date": rel.get("date")}
+                    "date": rel.get("date"), "commit": rel.get("commit")}
             except Exception:
                 release_cache["data"] = None
             release_cache["mtime"] = mtime
@@ -427,6 +443,152 @@ def main():
         db.commit()
         return web.json_response({"ok": True})
 
+    # ------------------------------------------------------------ déploiement (GitHub Actions)
+    gh_cache = {"t": 0.0, "data": None}
+
+    async def github(method, path, body=None):
+        cfg = load_config()
+        tok = cfg.get("github_token")
+        if not tok:
+            raise web.HTTPBadRequest(text="token GitHub non configuré")
+        headers = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json",
+                   "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "TamagoChat-server"}
+        timeout = aiohttp.ClientTimeout(total=15)
+        async with aiohttp.ClientSession(timeout=timeout) as s:
+            async with s.request(method, GITHUB_API + path, json=body, headers=headers) as r:
+                if r.status >= 400:
+                    msg = (await r.text())[:200]
+                    raise web.HTTPBadGateway(text=f"GitHub a répondu {r.status} : {msg}")
+                return None if r.status == 204 else await r.json()
+
+    async def admin_deploy_state(req):
+        check_admin(req)
+        cfg = load_config()
+        repo, rel = cfg.get("github_repo"), latest_release()
+        out = {"release": rel, "repo": repo, "has_token": bool(cfg.get("github_token")),
+               "has_deploy": bool(cfg.get("deploy_hash")), "commits": [], "runs": [],
+               "base_known": bool(rel and rel.get("commit")), "error": None}
+        if not (repo and out["has_token"]):
+            return web.json_response(out)
+        if gh_cache["data"] and now() - gh_cache["t"] < 8 and req.query.get("force") != "1":
+            out.update(gh_cache["data"])
+            return web.json_response(out)
+        try:
+            runs = await github("GET", f"/repos/{repo}/actions/workflows/{WORKFLOW}/runs?per_page=6")
+            gh_runs = [{"id": r["id"], "number": r["run_number"], "status": r["status"],
+                        "conclusion": r["conclusion"], "title": r.get("display_title"),
+                        "created": r["created_at"], "url": r["html_url"]}
+                       for r in runs.get("workflow_runs", [])]
+            if out["base_known"]:
+                cmp = await github("GET", f"/repos/{repo}/compare/{rel['commit']}...main")
+                commits = list(reversed(cmp.get("commits", [])))[:30]
+            else:
+                commits = await github("GET", f"/repos/{repo}/commits?sha=main&per_page=8")
+            gh_commits = [{"sha": c["sha"][:7], "message": c["commit"]["message"].split("\n")[0][:120],
+                           "author": c["commit"]["author"]["name"], "date": c["commit"]["author"]["date"],
+                           "url": c["html_url"]} for c in commits]
+            gh_cache.update(t=now(), data={"runs": gh_runs, "commits": gh_commits})
+            out.update(gh_cache["data"])
+        except web.HTTPException as e:
+            out["error"] = e.text
+        except Exception as e:
+            out["error"] = f"GitHub injoignable ({type(e).__name__})"
+        return web.json_response(out)
+
+    async def admin_deploy(req):
+        check_admin(req)
+        body = await read_json(req)
+        cfg = load_config()
+        if not cfg.get("github_repo") or not cfg.get("deploy_hash"):
+            raise web.HTTPBadRequest(text="déploiement non configuré sur le serveur")
+        v = clip(body.get("version"), 20).strip().lstrip("v")
+        if v:
+            rel = latest_release()
+            if not VERSION_RE.fullmatch(v):
+                raise web.HTTPBadRequest(text="version invalide (exemple : 1.2.0)")
+            if rel and version_tuple(v) <= version_tuple(rel["version"]):
+                raise web.HTTPBadRequest(text=f"la version doit être plus grande que {rel['version']}")
+        await github("POST", f"/repos/{cfg['github_repo']}/actions/workflows/{WORKFLOW}/dispatches",
+                     {"ref": "main", "inputs": {"version": v}})
+        gh_cache["data"] = None
+        return web.json_response({"ok": True})
+
+    async def admin_deploy_token(req):
+        check_admin(req)
+        body = await read_json(req)
+        tok = clip(body.get("token"), 300).strip()
+        cfg = load_config()
+        if tok and not re.fullmatch(r"(github_pat_|ghp_)[A-Za-z0-9_]{20,280}", tok):
+            raise web.HTTPBadRequest(text="ce n'est pas un token GitHub valide")
+        if tok:
+            cfg["github_token"] = tok
+        else:
+            cfg.pop("github_token", None)
+        save_config(cfg)
+        gh_cache["data"] = None
+        if tok and cfg.get("github_repo"):      # vérifie qu'il marche tout de suite
+            try:
+                await github("GET", f"/repos/{cfg['github_repo']}/actions/workflows/{WORKFLOW}")
+            except web.HTTPException as e:
+                return web.json_response({"ok": False, "error": e.text})
+        return web.json_response({"ok": True})
+
+    async def api_release(req):
+        """Reçoit un exe compilé et signé par GitHub Actions (jeton DEPLOY_TOKEN).
+        Le serveur revérifie la signature avec la clé publique avant de le publier."""
+        import ed25519_min
+        cfg = load_config()
+        auth = req.headers.get("Authorization", "")
+        if (not cfg.get("deploy_hash") or not auth.startswith("Bearer ")
+                or not hmac.compare_digest(sha256(auth[7:].strip()), cfg["deploy_hash"])):
+            await asyncio.sleep(1)
+            raise web.HTTPUnauthorized(text="jeton invalide")
+        v = req.headers.get("X-Version", "")
+        sha = req.headers.get("X-Sha256", "").lower()
+        sig = req.headers.get("X-Signature", "").lower()
+        commit = req.headers.get("X-Commit", "").lower()
+        if (not VERSION_RE.fullmatch(v) or not re.fullmatch(r"[0-9a-f]{64}", sha)
+                or not re.fullmatch(r"[0-9a-f]{128}", sig)):
+            raise web.HTTPBadRequest(text="en-têtes invalides")
+        rel = latest_release()
+        if rel and version_tuple(v) <= version_tuple(rel["version"]):
+            raise web.HTTPConflict(text=f"la version doit être plus grande que {rel['version']}")
+        name = f"TamagoChat-{v}.exe"
+        path = os.path.join(RELEASES, name)
+        tmp = path + ".part"
+        h, size = hashlib.sha256(), 0
+        try:
+            with open(tmp, "wb") as f:
+                async for chunk in req.content.iter_chunked(65536):
+                    size += len(chunk)
+                    if size > MAX_RELEASE:
+                        raise web.HTTPRequestEntityTooLarge(max_size=MAX_RELEASE, actual_size=size)
+                    f.write(chunk)
+                    h.update(chunk)
+            if h.hexdigest() != sha:
+                raise web.HTTPBadRequest(text="fichier corrompu (sha256)")
+            if not ed25519_min.verify(bytes.fromhex(cfg.get("update_pubkey", "")),
+                                      f"minou-update|{v}|{sha}".encode(), bytes.fromhex(sig)):
+                raise web.HTTPBadRequest(text="signature invalide : refusé")
+            os.replace(tmp, path)
+        finally:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        latest = {"version": v, "file": name, "sha256": sha, "size": size, "sig": sig,
+                  "date": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                  "commit": commit if re.fullmatch(r"[0-9a-f]{40}", commit) else None}
+        lj = os.path.join(RELEASES, "latest.json")
+        with open(lj + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(latest, f)
+        os.replace(lj + ".tmp", lj)
+        exes = sorted((p for p in os.listdir(RELEASES) if RELEASE_RE.match(p)),
+                      key=lambda p: os.path.getmtime(os.path.join(RELEASES, p)), reverse=True)
+        for old in exes[KEEP_RELEASES:]:
+            if old != name:
+                os.remove(os.path.join(RELEASES, old))
+        gh_cache["data"] = None
+        return web.json_response({"ok": True, "version": v, "size": size})
+
     async def root(req):
         raise web.HTTPFound("/admin")
 
@@ -444,15 +606,33 @@ def main():
         web.get("/admin/api/feed", admin_feed),
         web.post("/admin/api/send", admin_send),
         web.get("/admin/api/phrases", admin_phrases),
+        web.get("/admin/api/deploy", admin_deploy_state),
+        web.post("/admin/api/deploy", admin_deploy),
+        web.post("/admin/api/deploy/token", admin_deploy_token),
+        web.post("/api/release", api_release),
         web.post("/admin/api/forget", admin_forget),
     ])
     os.makedirs(RELEASES, exist_ok=True)
     web.run_app(app, host=HOST, port=PORT, access_log=None, print=None)
 
 
+def setup_deploy(repo, pubkey):
+    """Active le déploiement depuis GitHub Actions. Affiche le jeton à mettre dans le secret
+    DEPLOY_TOKEN du dépôt (il n'est stocké ici que sous forme de hash)."""
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo) or not re.fullmatch(r"[0-9a-f]{64}", pubkey):
+        sys.exit("usage : server.py setup-deploy PROPRIETAIRE/DEPOT CLE_PUBLIQUE_HEX")
+    token = secrets.token_urlsafe(32)
+    cfg = load_config()
+    cfg.update(github_repo=repo, update_pubkey=pubkey, deploy_hash=sha256(token))
+    save_config(cfg)
+    print(token)
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 3 and sys.argv[1] == "set-password":
         set_password(sys.argv[2])
         print("Mot de passe admin mis à jour.")
+    elif len(sys.argv) >= 4 and sys.argv[1] == "setup-deploy":
+        setup_deploy(sys.argv[2], sys.argv[3])
     else:
         main()

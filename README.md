@@ -85,7 +85,7 @@ et `MOT-DE-PASSE`) :
 sudo apt install -y python3-venv nginx certbot
 sudo useradd --system --home /opt/minou-server --shell /usr/sbin/nologin minou
 sudo mkdir -p /opt/minou-server /var/www/minou-acme
-sudo cp server.py admin.html requirements.txt /opt/minou-server/
+sudo cp server.py admin.html requirements.txt ../ed25519_min.py /opt/minou-server/
 sudo cp minou-server.service /etc/systemd/system/
 sed 's/TON-DOMAINE/MON-DOMAINE/g' nginx-minou.conf | sudo tee /etc/nginx/sites-available/minou > /dev/null
 
@@ -129,6 +129,30 @@ Prérequis : le `.venv` avec PyInstaller (voir plus haut), [Git pour Windows](ht
 Le script change `APP_VERSION` dans `chat.pyw`, compile `dist\TamagoChat.exe`, le signe et l'envoie :
 tous les chats connectés se mettent à jour seuls en moins d'une minute.
 
+### 5. Ou déployer depuis la page admin (GitHub Actions)
+
+Si le projet est sur GitHub, le bouton **🚀** de la page admin (en haut à droite) montre les changements
+pas encore déployés et lance la publication en un clic : un PC Windows de GitHub compile l'exe, le signe et
+l'envoie au serveur (`.github/workflows/release.yml` + `ci_release.py`). GitHub n'a **aucun accès SSH** au
+serveur : il envoie l'exe à `/api/release` avec un jeton dédié, et le serveur revérifie la signature avant
+de le publier.
+
+Configuration (une seule fois) :
+
+1. Sur le serveur, active le déploiement ; la commande affiche un jeton :
+   `cd /opt/minou-server && sudo -u minou venv/bin/python server.py setup-deploy PROPRIETAIRE/DEPOT CLE_PUBLIQUE`
+2. Dans le dépôt GitHub (Settings > Secrets and variables > Actions) :
+   - secrets `SIGNING_KEY` (contenu de `~\.minou\signing.key`), `SERVER_URL` (ex. `https://1-2-3-4.sslip.io`)
+     et `DEPLOY_TOKEN` (le jeton de l'étape 1) ;
+   - variable `UPDATE_PUBKEY` (la clé publique).
+3. Crée un token GitHub *fine-grained* limité à ce dépôt (permissions : Actions en lecture/écriture,
+   Contents en lecture) et colle-le dans la fenêtre 🚀 de la page admin.
+
+⚠️ Avec cette option, la clé de signature est stockée dans les secrets GitHub : protège le compte
+propriétaire du dépôt (double authentification), car il permet de publier une mise à jour.
+La version publiée est décidée au déploiement (champ vide = version suivante) ; chaque version
+déployée reçoit un tag `vX.Y.Z` sur GitHub.
+
 ## Fichiers
 
 | Fichier | Rôle |
@@ -137,7 +161,12 @@ tous les chats connectés se mettent à jour seuls en moins d'une minute.
 | `sprites.py` | les dessins en pixel art |
 | `ed25519_min.py` | signatures Ed25519 en Python pur (vérification des mises à jour) |
 | `local_config.example.py` | modèle de configuration privée |
-| `publier.py`, `publier.ps1` | compilation, signature et envoi d'une nouvelle version |
+| `publier.py`, `publier.ps1` | compilation, signature et envoi d'une nouvelle version depuis le PC |
+| `ci_release.py`, `.github/workflows/release.yml` | la même chose depuis GitHub Actions (bouton 🚀) |
 | `serveur/server.py` | serveur aiohttp + SQLite (API des chats, page admin, téléchargements) |
 | `serveur/admin.html` | la page admin |
 | `serveur/minou-server.service`, `serveur/nginx-minou.conf` | service systemd et site nginx |
+
+## Licence
+
+MIT, voir [LICENSE](LICENSE).

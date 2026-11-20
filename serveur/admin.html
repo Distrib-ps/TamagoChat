@@ -158,9 +158,33 @@ textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); ou
 .ph-add { display: flex; gap: 8px; }
 .ph-add input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); }
 
+/* mises à jour */
+.relbtn { border: 1px solid var(--line); cursor: pointer; font-size: 12.5px; }
+.relbtn:hover { border-color: var(--accent); color: var(--ink); }
+dialog#deploy { width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 40px); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
+dialog#deploy::backdrop { background: rgba(20, 12, 6, .45); }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.dlg-head h2 { margin: 0; font-size: 17px; }
+.dlg-body { padding: 16px 18px 20px; display: grid; gap: 16px; }
+.dlg-body h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.relinfo { font-size: 15px; }
+.relinfo .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.list li { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; display: flex; gap: 10px; align-items: baseline; }
+.list li:first-child { border-top: 0; }
+.list .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.list .muted, .muted { color: var(--muted); font-size: 12.5px; }
+.list a { color: inherit; }
+.deploy-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.deploy-form input { padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); width: 170px; }
+.tokform { display: flex; gap: 8px; }
+.tokform input { flex: 1; min-width: 0; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+.steps { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; color: var(--muted); }
+.steps a { color: var(--accent); }
+
 @media (max-width: 760px) {
   .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
-  #release { display: none; }
+  #online { display: none; }
   header { gap: 8px; }
   aside { border-right: 0; border-bottom: 1px solid var(--line); display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; }
   .catitem { width: auto; min-width: 150px; margin: 0; }
@@ -190,9 +214,13 @@ textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); ou
     <h1>🐱 TamagoChat</h1>
     <span class="badge" id="online">…</span>
     <span class="spacer"></span>
-    <span class="badge" id="release">…</span>
+    <button class="badge relbtn" id="release" title="Mises à jour">🚀 …</button>
     <button class="linkbtn" id="logout">Se déconnecter</button>
   </header>
+  <dialog id="deploy">
+    <div class="dlg-head"><h2>🚀 Mises à jour</h2><button class="ib" id="deployClose" title="Fermer">✖️</button></div>
+    <div id="deployBody" class="dlg-body"></div>
+  </dialog>
   <div class="layout">
     <aside id="cats"></aside>
     <main>
@@ -625,7 +653,7 @@ async function refresh() {
   try {
     const s = await api("/admin/api/state");
     cats = s.cats; serverNow = s.now;
-    $("release").textContent = s.release ? `Version publiée : v${s.release.version}` : "Aucune version publiée";
+    $("release").textContent = s.release ? `🚀 v${s.release.version}` : "🚀 Mises à jour";
     renderCats(); renderHead();
     if (tab === "settings") renderSettings();
     if (tab === "phrases") loadPhrases();
@@ -657,6 +685,124 @@ $("composer").addEventListener("submit", async (e) => {
 $("text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("composer").requestSubmit(); });
 try { $("from").value = localStorage.getItem("minou_from") || ""; } catch {}
 $("from").addEventListener("input", () => { try { localStorage.setItem("minou_from", $("from").value); } catch {} });
+
+// ---------------------------------------------------------------- mises à jour (GitHub Actions)
+let deployTimer = null, deployKey = "";
+const RUN_STATE = { queued: "⏳ en file d'attente", in_progress: "🔨 compilation en cours…", waiting: "⏳ en attente", requested: "⏳ demandé", pending: "⏳ en attente" };
+const RUN_END = { success: "✅ publiée", failure: "❌ échec", cancelled: "⛔ annulée", timed_out: "❌ trop longue" };
+function nextVersion(v) { if (!v) return ""; const p = v.split("."); p[p.length - 1] = String(Number(p[p.length - 1]) + 1); return p.join("."); }
+const isoAgo = (iso) => ago(Date.parse(iso) / 1000);
+async function openDeploy() {
+  $("deploy").showModal(); deployKey = "";
+  $("deployBody").replaceChildren(el("div", "muted", "Chargement…"));
+  await loadDeploy(true);
+  clearInterval(deployTimer);
+  deployTimer = setInterval(() => { if ($("deploy").open) loadDeploy(); else clearInterval(deployTimer); }, 5000);
+}
+$("release").onclick = openDeploy;
+$("deployClose").onclick = () => $("deploy").close();
+async function loadDeploy(force) {
+  try { renderDeploy(await api("/admin/api/deploy" + (force ? "?force=1" : ""))); }
+  catch (e) { if (e.message !== "auth") $("deployBody").replaceChildren(note("⚠️", "Erreur : " + e.message, "warn")); }
+}
+function renderDeploy(d) {
+  const key = JSON.stringify(d);
+  if (key === deployKey || $("deployBody").contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+  deployKey = key;
+  const b = $("deployBody"); b.replaceChildren();
+  const rel = d.release;
+
+  // version publiée et chats à jour
+  const s1 = el("section"); s1.append(el("h3", null, "Version publiée"));
+  const info = el("div", "relinfo");
+  if (rel) {
+    info.append(el("div", null, `v${rel.version}`));
+    const upToDate = cats.filter(c => c.version === rel.version).length;
+    const origin = rel.commit ? `compilée par GitHub (commit ${rel.commit.slice(0, 7)})` : "publiée depuis le PC";
+    info.append(el("div", "sub", `${rel.date ? "le " + new Date(rel.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) + " · " : ""}${origin} · ${upToDate}/${cats.length} chat(s) à jour`));
+  } else info.append(el("div", null, "Aucune version publiée pour l'instant."));
+  s1.append(info); b.append(s1);
+
+  if (!d.has_deploy) {
+    b.append(note("🔧", "Le déploiement depuis GitHub n'est pas encore configuré sur le serveur (commande « setup-deploy », voir le README)."));
+    return;
+  }
+  if (!d.has_token) { b.append(tokenForm(d, false)); return; }
+  if (d.error) b.append(note("⚠️", d.error, "warn"));
+
+  // changements pas encore déployés
+  const s2 = el("section");
+  const n = d.commits.length;
+  s2.append(el("h3", null, d.base_known ? (n ? `${n} changement${n > 1 ? "s" : ""} pas encore déployé${n > 1 ? "s" : ""}` : "Changements") : "Derniers changements sur GitHub"));
+  if (!d.base_known) s2.append(el("div", "muted", "La version publiée ne vient pas de GitHub : impossible de savoir lesquels elle contient déjà."));
+  if (d.base_known && !n) s2.append(el("div", "muted", "Rien de nouveau sur GitHub : la version publiée est à jour avec le code."));
+  if (n) {
+    const ul = el("ul", "list");
+    for (const c of d.commits) {
+      const li = el("li"); const a = el("a", "grow", c.message); a.href = c.url; a.target = "_blank"; a.rel = "noopener";
+      li.append(a, el("span", "muted", `${c.sha} · ${isoAgo(c.date)}`)); ul.append(li);
+    }
+    s2.append(ul);
+  }
+  b.append(s2);
+
+  // déployer
+  const running = d.runs.some(r => r.status !== "completed");
+  const s3 = el("section"); s3.append(el("h3", null, "Déployer"));
+  const f = el("form", "deploy-form");
+  const vi = el("input"); vi.placeholder = rel ? `${nextVersion(rel.version)} (auto)` : "1.0.0"; vi.maxLength = 20;
+  const go = el("button", "btn", running ? "Déploiement en cours…" : "🚀 Compiler et déployer"); go.disabled = running;
+  f.append(vi, go);
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const v = vi.value.trim();
+    if (!confirm(`Compiler le code de GitHub et l'envoyer à tous les chats en version ${v || nextVersion(rel?.version) || "suivante"} ?`)) return;
+    go.disabled = true; go.textContent = "Lancement…";
+    try { await api("/admin/api/deploy", { version: v }); toast("C'est parti ! Compilation sur GitHub (~3 min)…"); setTimeout(() => loadDeploy(true), 2500); }
+    catch (err) { if (err.message !== "auth") toast("Erreur : " + err.message); go.disabled = false; go.textContent = "🚀 Compiler et déployer"; }
+  };
+  s3.append(f, el("div", "muted", "GitHub compile l'exe (~3 min), le signe et l'envoie au serveur ; les chats se mettent à jour dans la minute qui suit."));
+  b.append(s3);
+
+  // historique
+  if (d.runs.length) {
+    const s4 = el("section"); s4.append(el("h3", null, "Historique"));
+    const ul = el("ul", "list");
+    for (const r of d.runs) {
+      const li = el("li");
+      const st = r.status === "completed" ? (RUN_END[r.conclusion] || r.conclusion) : (RUN_STATE[r.status] || r.status);
+      const a = el("a", "grow", `${st} · ${r.title || "#" + r.number}`); a.href = r.url; a.target = "_blank"; a.rel = "noopener";
+      li.append(a, el("span", "muted", isoAgo(r.created))); ul.append(li);
+    }
+    s4.append(ul); b.append(s4);
+  }
+  const chg = el("button", "linkbtn", "Changer le token GitHub");
+  chg.onclick = () => { b.replaceChildren(tokenForm(d, true)); };
+  b.append(chg);
+}
+function tokenForm(d, change) {
+  const s = el("section"); s.append(el("h3", null, change ? "Changer le token GitHub" : "Connecter GitHub (une seule fois)"));
+  const ol = el("ol", "steps");
+  const li1 = el("li"); const a = el("a", null, "Crée un token GitHub « fine-grained »"); a.href = "https://github.com/settings/personal-access-tokens/new"; a.target = "_blank"; a.rel = "noopener";
+  li1.append(a, document.createTextNode(` avec le compte propriétaire de ${d.repo || "ton dépôt"}.`));
+  ol.append(li1,
+    el("li", null, `Repository access : « Only select repositories » → ${d.repo ? d.repo.split("/")[1] : "le dépôt"}.`),
+    el("li", null, "Permissions : Actions → « Read and write », Contents → « Read-only »."),
+    el("li", null, "Expiration : au choix (1 an par exemple). Copie le token et colle-le ici."));
+  const f = el("form", "tokform");
+  const inp = el("input"); inp.type = "password"; inp.placeholder = "github_pat_…"; inp.autocomplete = "off";
+  const ok = el("button", "btn", "Enregistrer"); f.append(inp, ok);
+  f.onsubmit = async (e) => {
+    e.preventDefault(); ok.disabled = true;
+    try {
+      const r = await api("/admin/api/deploy/token", { token: inp.value.trim() });
+      if (r.ok) toast("Token enregistré ✓"); else toast("Token enregistré, mais GitHub refuse : " + r.error);
+      deployKey = ""; inp.value = ""; await loadDeploy(true);
+    } catch (err) { if (err.message !== "auth") toast("Erreur : " + err.message); ok.disabled = false; }
+  };
+  s.append(ol, f, el("div", "muted", "Le token reste sur ton serveur (jamais renvoyé à la page). Il ne peut que lancer la compilation de ce dépôt."));
+  return s;
+}
 
 let timer = null;
 async function start() {

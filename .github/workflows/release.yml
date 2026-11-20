@@ -1,0 +1,60 @@
+# Compile, signe et publie TamagoChat.exe sur le serveur.
+# Lancé depuis la page admin (bouton « Déployer ») ou depuis l'onglet Actions de GitHub.
+# Secrets du dépôt : SIGNING_KEY, DEPLOY_TOKEN, SERVER_URL · Variable : UPDATE_PUBKEY (voir README).
+name: Publier une version
+run-name: Publier ${{ inputs.version || 'la version suivante' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (vide = la suivante, ex. 1.2.0)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # uniquement pour créer le tag de la version
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Choix de la version et configuration
+        id: prep
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+          UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: python ci_release.py prepare
+
+      - name: Compilation
+        run: |
+          python -m pip install --disable-pip-version-check -q pyinstaller==6.22.3
+          $ico = "$PWD\chat.ico"
+          python -m PyInstaller --noconfirm --onefile --windowed --log-level WARN --name TamagoChat --icon $ico --add-data "$ico;." --workpath "$env:RUNNER_TEMP\build" --specpath "$env:RUNNER_TEMP\build" chat.pyw
+
+      - name: Signature et envoi au serveur
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+          UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: python ci_release.py upload
+
+      - name: Tag de la version
+        env:
+          VERSION: ${{ steps.prep.outputs.version }}
+        run: |
+          git tag "v$env:VERSION"
+          git push origin "v$env:VERSION"
