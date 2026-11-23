@@ -17,13 +17,14 @@ from .dialogs import DialogsMixin
 from .fly import Fly
 from .hunt import HuntMixin
 from .menu import MenuMixin
+from .reactions import ReactionsMixin
 from .remote import Remote, RemoteMixin
 from .render import RenderMixin
 from .storage import load_save, log_error
 
 
-class App(BehaviorMixin, ActionsMixin, HuntMixin, RemoteMixin, RenderMixin, MenuMixin,
-          DialogsMixin):
+class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, RenderMixin,
+          MenuMixin, DialogsMixin):
     def __init__(self):
         self.data = load_save()
         self.stats = self.data["stats"]
@@ -38,6 +39,7 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, RemoteMixin, RenderMixin, Menu
         desktop.setup_root(r, self.quit)
         self.dpi = desktop.dpi_scale(r)
         self.runs = {}                       # segments de pixels par sprite (voir render.py)
+        self.chase_spin = 0                  # durée de la course après sa queue (reactions.py)
         self.scene, self.last_scene = [], None
 
         self.canvas = tk.Canvas(r, bg=desktop.BG, highlightthickness=0, bd=0, cursor="hand2")
@@ -197,6 +199,8 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, RemoteMixin, RenderMixin, Menu
             col, row = (23, 4) if self.facing == "right" else (7, 4)
         else:
             col, row = 12, 1
+            if self.state == "stretch":      # la tête monte quand il s'étire
+                row -= self.stretch_pose()[0]
         return self.x + (SIDE + col) * self.S, self.y + (TOP + row) * self.S
 
     # ---------------------------------------------------------- boucle

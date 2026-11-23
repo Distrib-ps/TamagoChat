@@ -104,6 +104,9 @@ class BehaviorMixin:
         if s["energie"] < 30 and random.random() < 0.15:
             self.set_state("sleep")
             return
+        if s["energie"] > 15 and random.random() < 0.08:   # toilette, étirement, atchoum...
+            self.start_reaction()
+            return
         if self.data["autowalk"] and random.random() < 0.45:
             area = self.area()
             lo, hi = self.x_bounds(area)
@@ -185,7 +188,9 @@ class BehaviorMixin:
         if self.st_t % 7 == 1:
             self.spawn("heart", SIDE + random.uniform(3, 15), TOP + random.uniform(-1, 3),
                        vx=random.uniform(-0.12, 0.12), vy=-0.3, life=28)
+        self.purr()
         if self.st_t >= self.st_len:
+            self.move_window()
             self.set_state("idle")
 
     def st_eat(self):

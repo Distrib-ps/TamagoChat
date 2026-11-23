@@ -2,6 +2,7 @@
 import tkinter as tk
 
 from . import desktop
+from .reactions import REACTION_LABELS
 from .config import APP_VERSION, CHATTER_PRESETS, CRAZY_PRESETS, FLY_PRESETS, SERVER_URL, SIZES
 
 
@@ -26,6 +27,10 @@ class MenuMixin:
         m.add_command(label="Le calmer !" if self.state == "crazy" else "Crise de folie !",
                       command=self.act_crazy)
         m.add_command(label="Lâcher des mouches", command=lambda: self.spawn_flies(manual=True))
+        react = tk.Menu(m, tearoff=0)
+        for kind, label in REACTION_LABELS.items():
+            react.add_command(label=label, command=lambda k=kind: self.start_reaction(k))
+        m.add_cascade(label="Réactions", menu=react)
         m.add_separator()
         m.add_command(label="Voir son état...", command=self.open_stats)
         m.add_command(label="Le renommer...", command=self.open_rename)

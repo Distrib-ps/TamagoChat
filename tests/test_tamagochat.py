@@ -45,6 +45,29 @@ class TestSprites(unittest.TestCase):
         self.assertEqual(covered, opaque)
 
 
+class TestReactions(unittest.TestCase):
+    def test_sprites(self):
+        for rows in (sprites.make_yawn(), sprites.make_groom(0), sprites.make_groom(1)):
+            self.assertEqual((len(rows[0]), len(rows)), (31, 24))
+        for extra in range(0, 7):
+            rows = sprites.make_stretch(extra, yawn=extra == 6)
+            self.assertEqual(len(rows), 24 + extra)          # plus haut, même largeur
+            self.assertEqual({len(r) for r in rows}, {31})
+        self.assertEqual(sprites.make_stretch(0), sprites.make_sit("closed", "normal", "up"))
+
+    def test_reactions_known_everywhere(self):
+        from tamagochat.reactions import REACTION_LABELS, REACTIONS
+        self.assertEqual(set(REACTION_LABELS), set(REACTIONS))
+        for kind in REACTIONS + ("dizzy",):                  # chaque réaction a ses phrases
+            self.assertTrue(PHRASES[kind])
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        server = open(os.path.join(root, "serveur", "server.py"), encoding="utf-8").read()
+        admin = open(os.path.join(root, "serveur", "admin.html"), encoding="utf-8").read()
+        for kind in REACTIONS:                               # action à distance acceptée et affichée
+            self.assertIn(f'"{kind}"', server)
+            self.assertIn(f'["{kind}"', admin)
+
+
 class TestPhrases(unittest.TestCase):
     def test_every_category_has_phrases(self):
         self.assertEqual({k for k, _ in PHRASE_CATEGORIES}, set(PHRASES))
