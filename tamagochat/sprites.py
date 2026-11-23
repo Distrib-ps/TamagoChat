@@ -237,6 +237,57 @@ def make_walk(frame, facing="right", crazy=False):
     return canvas if facing == "right" else flip(canvas)
 
 
+# ---------------------------------------------------------------- réactions
+# bouche grande ouverte (bâillement), sous le nez
+FACE_YAWN = [(10, 11, "K"), (11, 11, "K"), (12, 11, "K"), (13, 11, "K"),
+             (9, 12, "K"), (10, 12, "P"), (11, 12, "P"), (12, 12, "P"), (13, 12, "P"), (14, 12, "K"),
+             (9, 13, "K"), (10, 13, "P"), (11, 13, "R"), (12, 13, "R"), (13, 13, "P"), (14, 13, "K"),
+             (10, 14, "K"), (11, 14, "K"), (12, 14, "K"), (13, 14, "K")]
+# patte avant levée jusqu'à la bouche (toilette)
+GROOM_PAW = [
+    "..KKKK..",
+    ".KWWWWK.",
+    ".KWWWWK.",
+    ".KOOOOK.",
+    "..KOOOK.",
+    "..KOOOK.",
+    "..KODK..",
+    "..KOOK..",
+]
+
+
+def _sit_face(rows, eyes, mouth_pts, dy=0):
+    return points(rows, [(x, y + dy, c) for x, y, c in _eye_pts(eyes) + FACE_NOSE + mouth_pts])
+
+
+def make_yawn():
+    """Assis, yeux fermés, bouche grande ouverte."""
+    canvas = pad([], 31, 24)
+    canvas = overlay(canvas, TAIL_UP, 21, 12)
+    canvas = overlay(canvas, SIT_BODY, 0, 0)
+    return _sit_face(canvas, "closed", FACE_YAWN)
+
+
+def make_groom(frame):
+    """Fait sa toilette : patte levée et petite langue rose ; frame 0/1 = patte haute/basse."""
+    canvas = make_sit("closed", "normal", "side")
+    if frame == 0:
+        canvas = overlay(canvas, GROOM_PAW, 5, 10)
+        return points(canvas, [(13, 12, "P"), (13, 13, "P")])
+    canvas = overlay(canvas, GROOM_PAW, 5, 13)
+    return points(canvas, [(11, 12, "P"), (12, 12, "P"), (12, 13, "P")])
+
+
+def make_stretch(extra, yawn=False):
+    """S'étire vers le haut : buste allongé de `extra` lignes (sprite plus haut que 24)."""
+    torso = SIT_BODY[15:17]       # lignes du buste sans encoche : on peut les répéter
+    body = SIT_BODY[:14] + [torso[i % len(torso)] for i in range(extra)] + SIT_BODY[14:]
+    canvas = pad([], 31, 24 + extra)
+    canvas = overlay(canvas, TAIL_UP, 21, 12 + extra)
+    canvas = overlay(canvas, body, 0, 0)
+    return _sit_face(canvas, "closed", FACE_YAWN if yawn else FACE_MOUTH)
+
+
 # ---------------------------------------------------------------- accessoires
 HEART = [
     ".KK.KK.",

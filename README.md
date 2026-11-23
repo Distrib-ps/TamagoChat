@@ -18,7 +18,8 @@
 ---
 
 Minou se promène au-dessus de la barre des tâches (Windows) ou du Dock (macOS). On le caresse, on le
-nourrit, il parle, chasse les mouches et pique des crises de folie. Avec le serveur optionnel, on peut
+nourrit, il parle, chasse les mouches, fait sa toilette, s'étire, éternue, court après sa queue et pique
+des crises de folie. Avec le serveur optionnel, on peut
 aussi lui envoyer des messages et des bêtises à distance depuis une page web.
 
 ## Fonctionnalités
@@ -82,7 +83,7 @@ Le chat se met ensuite à jour tout seul.
 |---|---|
 | Clic gauche | Caresser |
 | Glisser | Déplacer (on peut le lancer, il retombe) |
-| Clic droit (ctrl+clic sur Mac) | Menu : manger, boire, jouer, sieste, folie, mouches, état, renommer, phrases, options |
+| Clic droit (ctrl+clic sur Mac) | Menu : manger, boire, jouer, sieste, folie, mouches, réactions, état, renommer, phrases, options |
 | Clic sur une mouche | L'écraser (il n'aime pas qu'on lui vole son goûter) |
 
 Les options permettent de régler la promenade, la fréquence des phrases, le mode FOU, les mouches,
@@ -119,6 +120,7 @@ tamagochat/
 ├── behavior.py          comportement autonome : jauges, paroles, décisions, états
 ├── actions.py           soins, jeux et pouvoirs envoyés depuis la page admin
 ├── hunt.py, fly.py      chasse aux mouches
+├── reactions.py         toilette, étirement, atchoum, course après sa queue
 ├── render.py            dessin en pixel art (sprites.py)
 ├── bubble.py            bulle de dialogue
 ├── menu.py, dialogs.py  menu du clic droit et fenêtres annexes
@@ -171,7 +173,8 @@ Un petit serveur Linux (un VPS suffit, ~40 Mo de RAM) avec nginx apporte :
 
 - **la page admin** `https://<serveur>/admin`, protégée par mot de passe : messages, soins, bêtises
   (folie XXL, nuée de mouches, grand saut, chute du ciel, changement d'écran, chasse à la souris,
-  cache-cache), réglages, jauges, phrases et réponses des amis ;
+  cache-cache), réactions (toilette, étirement, atchoum, course après sa queue), réglages, jauges,
+  phrases et réponses des amis ;
 - **la distribution des mises à jour**, toujours vérifiées par leur signature.
 
 Chaque propriétaire garde la main dans les options de son chat (messages à distance, mises à jour

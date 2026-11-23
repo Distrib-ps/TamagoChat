@@ -27,7 +27,8 @@ MAX_CATS = 500
 SESSION_DAYS = 30
 STAT_KEYS = ("satiete", "hydratation", "bonheur", "energie")
 ACTIONS = ("crazy", "flies", "sleep", "wake", "pet", "feed", "drink", "play", "meow",
-           "crazy_xl", "swarm", "love", "jump", "drop", "screen", "mouse", "hide")
+           "crazy_xl", "swarm", "love", "jump", "drop", "screen", "mouse", "hide",
+           "groom", "stretch", "sneeze", "chase_tail")
 SIZES = ("Petit", "Moyen", "Grand")
 VERSION_RE = re.compile(r"\d+(\.\d+){1,3}")
 MAX_RELEASE = 100 * 1024 * 1024

@@ -13,6 +13,7 @@ from . import desktop, ed25519
 from .config import (APP_VERSION, FLY_POOL, FROZEN, REMOTE_SETTINGS, SERVER_URL, SIDE, SIZES, STATS,
                      TOP, UPDATE_PUBKEY)
 from .phrases import PHRASES, PHRASE_CATEGORIES
+from .reactions import REACTIONS
 from .storage import log_error
 
 
@@ -298,6 +299,8 @@ class RemoteMixin:
             self.run_to_mouse()
         elif action == "hide":
             self.hide_and_seek()
+        elif action in REACTIONS:
+            self.start_reaction(action)
 
     def set_remote_opt(self, key, value):
         self.data[key] = value

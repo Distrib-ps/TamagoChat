@@ -34,6 +34,11 @@ PHRASE_CATEGORIES = [
     ("fly_miss", "Mouches : quand il la rate"),
     ("fly_gone", "Mouches : quand elles s'envolent"),
     ("fly_swat", "Mouches : quand tu en écrases une"),
+    ("groom", "Quand il fait sa toilette"),
+    ("stretch", "Quand il s'étire"),
+    ("sneeze", "Quand il éternue"),
+    ("chase_tail", "Quand il court après sa queue"),
+    ("dizzy", "Après avoir couru après sa queue"),
 ]
 
 PHRASES = {
@@ -99,6 +104,15 @@ PHRASES = {
     "fly_gone": ["Elle s'est enfuie...", "La prochaine fois, je l'aurai."],
     "fly_swat": ["Hé ! C'était la mienne !", "Tu me voles mon goûter ?",
                  "Bien visé... mais c'était MA proie."],
+    "groom": ["*se lèche la patte*", "Il faut être beau pour toi.", "Lick lick lick...",
+              "Toilette en cours, ne pas déranger."],
+    "stretch": ["*s'étiiiiire*", "Aaaaah... ça fait du bien.", "*bâille* Hmmmm...",
+                "Petit étirement de chat !"],
+    "sneeze": ["ATCHOUM !", "Atchiii !", "Pfft ! Une poussière...", "Atchoum ! ... pardon."],
+    "chase_tail": ["Qui me suit comme ça ?!", "Reviens ici, toi !", "Je vais l'attraper, cette queue !",
+                   "Elle est à moi !"],
+    "dizzy": ["La tête qui tourne...", "Tout tourne autour de moi...", "Ouh là... je vois double.",
+              "Je l'ai presque eue !"],
 }
 NEED_PHRASE = {"satiete": "hungry", "hydratation": "thirsty",
                "bonheur": "bored", "energie": "tired"}

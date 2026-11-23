@@ -90,6 +90,8 @@ class ActionsMixin:
         self.set_state("idle")
         self.next_decision = random.randint(3 * FPS, 6 * FPS)
         self.say(key)
+        if key == "wake" and random.random() < 0.8:      # réveil en douceur : il s'étire
+            self.start_reaction("stretch", quiet=True)
 
     # ---------------------------------------------------------- pouvoirs à distance
     def take_over(self):

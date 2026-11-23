@@ -87,7 +87,7 @@ main { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 
 .pane-chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
 .actions { padding: 10px 20px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 7px; }
 .actions .grp { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
-.actions .lbl { font-size: 12px; color: var(--muted); width: 58px; flex: none; text-transform: uppercase; letter-spacing: .04em; }
+.actions .lbl { font-size: 12px; color: var(--muted); width: 74px; flex: none; text-transform: uppercase; letter-spacing: .04em; }
 .chip { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 6px 12px; font-size: 13.5px; }
 .chip:hover { border-color: var(--accent); background: var(--accent-soft); }
 .chip:active { transform: translateY(1px); }
@@ -262,11 +262,14 @@ const ACTION_GROUPS = [
   ["Bêtises", [["crazy", "🌀 Crise de folie"], ["crazy_xl", "🌪️ Folie XXL (30 s)"], ["flies", "🪰 Mouches"],
                ["swarm", "🪰🪰 Nuée de mouches"], ["jump", "🦘 Grand saut"], ["drop", "☄️ Tomber du ciel"],
                ["screen", "🖥️ Changer d'écran"], ["mouse", "🖱️ Chasser la souris"], ["hide", "🙈 Cache-cache"]]],
+  ["Réactions", [["groom", "👅 Toilette"], ["stretch", "🥱 Étirement"], ["sneeze", "🤧 Atchoum"],
+                 ["chase_tail", "🐈 Courir après sa queue"]]],
 ];
 const ACTION_LABEL = Object.fromEntries(ACTION_GROUPS.flatMap(g => g[1]));
 const STATES = { idle: "tranquille", walk: "se promène", sleep: "dort", eat: "mange", drink: "boit",
   play: "joue à la pelote", pet: "se fait câliner", crazy: "fait une crise de folie !",
-  hunt: "chasse une mouche", drag: "est porté", fall: "tombe", hidden: "joue à cache-cache 🙈" };
+  hunt: "chasse une mouche", drag: "est porté", fall: "tombe", hidden: "joue à cache-cache 🙈",
+  groom: "fait sa toilette", stretch: "s'étire", sneeze: "éternue", chase_tail: "court après sa queue" };
 const STATS = [["satiete", "Satiété"], ["hydratation", "Hydratation"], ["bonheur", "Bonheur"], ["energie", "Énergie"]];
 const STAT_LABEL = Object.fromEntries(STATS);
 const CHATTER = [[30, "Très souvent (~30 s)"], [60, "Souvent (~1 min)"], [180, "Normal (~3 min)"],

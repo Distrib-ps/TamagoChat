@@ -41,6 +41,8 @@ class RenderMixin:
             return not (self.crazy and self.crazy["freeze"] > 0)
         if self.state == "hunt" and self.hunt:
             return self.hunt["phase"] == "air" or self.hunt["moving"]
+        if self.state == "chase_tail":
+            return self.st_t < self.chase_spin
         return self.state == "play" and self.yarn and self.yarn["chasing"]
 
     def cat_sprite(self):
@@ -120,8 +122,12 @@ class RenderMixin:
             full = self.st_t < self.st_len * 0.7
             self.blit(("water", full), lambda: sp.BOWL_WATER if full else sp.BOWL_FOOD_EMPTY,
                       SIDE - 13, CH - 6)
-        key, build = self.cat_sprite()
-        self.blit(key, build, SIDE, TOP)
+        reaction = self.reaction_sprite()
+        if reaction:                     # toilette, étirement... (le sprite peut être plus haut)
+            key, build, lift = reaction
+        else:
+            (key, build), lift = self.cat_sprite(), 0
+        self.blit(key, build, SIDE, TOP - lift)
         if st == "play" and self.yarn:
             ux = (self.yarn["x"] - self.x) / self.S - 4
             uy = CH - 7 - self.yarn["h"] / self.S
