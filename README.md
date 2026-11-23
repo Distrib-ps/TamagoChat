@@ -9,6 +9,8 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
+<img src="docs/images/parle.png" alt="Minou, le chat de TamagoChat, qui parle dans une bulle" width="380">
+
 [Installer](#installation) · [Utiliser](#utilisation) · [Développer](#développement) · [Publier](#publier-une-version) · [Serveur](#serveur-optionnel)
 
 </div>
@@ -19,35 +21,46 @@ Minou se promène au-dessus de la barre des tâches (Windows) ou du Dock (macOS)
 nourrit, il parle, chasse les mouches et pique des crises de folie. Avec le serveur optionnel, on peut
 aussi lui envoyer des messages et des bêtises à distance depuis une page web.
 
+## Fonctionnalités
+
 <table>
   <tr>
-    <td><img src="docs/images/parle.png" alt="Le chat parle dans une bulle"></td>
-    <td><img src="docs/images/mouches.png" alt="Le chat chasse une mouche"></td>
-    <td><img src="docs/images/pelote.png" alt="Le chat joue à la pelote"></td>
+    <td width="33%" valign="top">
+      <img src="docs/images/chasse.png" alt="Le chat repère une mouche"><br>
+      <b>Chasseur</b><br>
+      <sub>Des mouches apparaissent de temps en temps : il les traque et bondit pour les gober.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/pelote.png" alt="Le chat poursuit sa pelote"><br>
+      <b>Joueur</b><br>
+      <sub>Pelote, crises de folie, grands sauts : il court partout, d'un écran à l'autre.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/caresse.png" alt="Le chat ronronne sous les caresses"><br>
+      <b>Câlin</b><br>
+      <sub>Un clic pour le caresser ; il réagit, et finit par réclamer un peu d'espace.</sub>
+    </td>
   </tr>
   <tr>
-    <td align="center">Il parle</td>
-    <td align="center">Il chasse les mouches</td>
-    <td align="center">Il joue à la pelote</td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/mange.png" alt="Le chat mange"></td>
-    <td><img src="docs/images/dodo.png" alt="Le chat fait la sieste"></td>
-    <td><img src="docs/images/etat.png" alt="Fenêtre d'état du chat"></td>
-  </tr>
-  <tr>
-    <td align="center">Il mange</td>
-    <td align="center">Il fait la sieste</td>
-    <td align="center">Ses jauges</td>
+    <td width="33%" valign="top">
+      <img src="docs/images/repas.png" alt="Le chat mange dans sa gamelle"><br>
+      <b>Gourmand</b><br>
+      <sub>Il faut le nourrir et lui donner à boire, sinon il le fait savoir.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/sieste.png" alt="Le chat fait la sieste"><br>
+      <b>Dormeur</b><br>
+      <sub>Quand il est fatigué, il fait une sieste pour recharger son énergie.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/etat.png" alt="La fenêtre d'état avec ses quatre jauges"><br>
+      <b>Tamagotchi</b><br>
+      <sub>Satiété, hydratation, bonheur et énergie baissent avec le temps. Il ne meurt jamais, il devient juste grognon.</sub>
+    </td>
   </tr>
 </table>
 
-## Fonctionnalités
-
-- **Vivant** : il marche, dort, joue à la pelote, bondit sur les mouches, passe d'un écran à l'autre
-- **Bavard** : des phrases pour chaque situation (faim, sieste, caresse, matin…), toutes modifiables
-- **Tamagotchi** : satiété, hydratation, bonheur et énergie baissent avec le temps (il ne meurt jamais,
-  il devient juste grognon)
+- **Bavard** : des phrases pour chaque situation (faim, sieste, matin…), toutes modifiables
 - **À distance** : messages, soins, bêtises et réglages depuis une page admin protégée
 - **Mises à jour automatiques et signées** : un chat n'installe qu'une version signée par votre clé
 - **Windows 10 / 11 et macOS**, un ou plusieurs écrans
