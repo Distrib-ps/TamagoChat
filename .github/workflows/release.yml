@@ -7,11 +7,15 @@
 #   chore:, docs:, refactor:...      -> rien à publier
 #
 # 1. version : tests, puis semantic-release --dry-run calcule le prochain numéro
-# 2. build   : compile et signe l'app Windows (.exe) et Mac (.app zippée)
-# 3. release : envoie les deux au serveur (/api/release, qui revérifie la signature ; GitHub n'a
-#              aucun accès SSH), puis semantic-release crée le tag, le CHANGELOG et la release GitHub
+# 2. build   : compile l'app Windows (.exe) et Mac (.app zippée), sans aucune clé
+#              (un échec de la version Mac n'empêche pas de publier Windows)
+# 3. sign    : signe les fichiers ; seule étape qui voit SIGNING_KEY, et elle n'installe rien
+# 4. release : envoie au serveur (/api/release, qui revérifie la signature ; GitHub n'a aucun
+#              accès SSH), puis semantic-release crée le tag, le CHANGELOG et la release GitHub
 #
-# Secrets du dépôt : SIGNING_KEY, DEPLOY_TOKEN, SERVER_URL · Variable : UPDATE_PUBKEY (voir README).
+# Les secrets (SIGNING_KEY, DEPLOY_TOKEN, SERVER_URL) sont dans l'environnement GitHub « release »,
+# réservé à la branche main : un workflow lancé depuis une autre branche n'y a pas accès.
+# Variable du dépôt : UPDATE_PUBKEY (voir README).
 name: Publier une version
 run-name: Publier la version suivante
 
@@ -59,7 +63,9 @@ jobs:
 
   build:
     needs: version
+    environment: release   # pour SERVER_URL (intégrée à l'app)
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -67,6 +73,7 @@ jobs:
           - os: macos-latest
             python: python3
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'macos-latest' }}   # Mac facultatif : Windows passe quand même
     timeout-minutes: 20
     defaults:
       run:
@@ -96,7 +103,7 @@ jobs:
           SERVER_URL: ${{ secrets.SERVER_URL }}
           UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
         run: |
-          $PY -m pip install --disable-pip-version-check -q pyinstaller==6.22.3 pillow
+          $PY -m pip install --disable-pip-version-check -q pyinstaller==6.22.3 pillow==11.1.0
           # adresse du serveur et clé publique intégrées à l'app
           printf 'SERVER_URL = "%s"\nUPDATE_PUBKEY = "%s"\n' "${SERVER_URL%/}" "$UPDATE_PUBKEY" > local_config.py
           perl -pi -e 's/^__version__ = "[^"]*"/__version__ = "$ENV{VERSION}"/' tamagochat/__init__.py
@@ -122,18 +129,42 @@ jobs:
           codesign --force --deep --sign - dist/TamagoChat.app  # signature ad hoc (plist modifié)
           ditto -c -k --sequesterRsrc --keepParent dist/TamagoChat.app "release/TamagoChat-$VERSION-mac.zip"
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-${{ runner.os }}
+          path: release/
+          if-no-files-found: error
+
+  sign:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    environment: release
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4   # pour tamagochat/ed25519.py (Python pur : rien à installer)
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: unsigned-*
+          path: release
+          merge-multiple: true
       - name: Signature (seules les versions signées sont installées par les chats)
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
         run: |
-          $PY - <<'EOF'
+          python3 - <<'EOF'
           import glob, hashlib, json, os
           from tamagochat import ed25519
           version, secret = os.environ["VERSION"], bytes.fromhex(os.environ["SIGNING_KEY"].strip())
           if ed25519.public_key(secret).hex() != os.environ["UPDATE_PUBKEY"]:
               raise SystemExit("SIGNING_KEY ne correspond pas à UPDATE_PUBKEY")
-          for path in glob.glob("release/TamagoChat-*"):
+          files = glob.glob("release/TamagoChat-*.exe") + glob.glob("release/TamagoChat-*-mac.zip")
+          if not any(f.endswith(".exe") for f in files):
+              raise SystemExit("La compilation Windows est introuvable : rien n'est publié.")
+          if not any(f.endswith("-mac.zip") for f in files):
+              print("::warning::Compilation Mac en échec : seule la version Windows est publiée.")
+          for path in files:
               mac = path.endswith("-mac.zip")
               sha = hashlib.sha256(open(path, "rb").read()).hexdigest()
               tag = "minou-update-mac" if mac else "minou-update"
@@ -143,16 +174,16 @@ jobs:
                              "sha256": sha, "sig": sig}, f)
               print("signé :", path)
           EOF
-
       - uses: actions/upload-artifact@v4
         with:
-          name: release-${{ runner.os }}
+          name: signed
           path: release/
           if-no-files-found: error
 
   release:
-    needs: [version, build]
+    needs: [version, sign]
     runs-on: ubuntu-latest
+    environment: release
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -161,10 +192,11 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          pattern: release-*
+          name: signed
           path: release
-          merge-multiple: true
 
+      # Envoi avant le tag : si la suite échoue, relancer la publication renvoie le même numéro
+      # et le serveur remplace simplement le fichier (même code source).
       - name: Envoi au serveur (il revérifie la signature ; les chats se mettent à jour dans la minute)
         env:
           SERVER_URL: ${{ secrets.SERVER_URL }}

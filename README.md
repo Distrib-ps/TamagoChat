@@ -243,24 +243,27 @@ et le serveur revérifie la signature avant de la publier.
    ```bash
    cd /opt/minou-server && sudo -u minou venv/bin/python server.py setup-deploy PROPRIETAIRE/DEPOT CLE_PUBLIQUE
    ```
-2. Dans le dépôt GitHub, *Settings › Secrets and variables › Actions* :
+2. Dans le dépôt GitHub, *Settings › Environments*, créer l'environnement `release` et limiter ses
+   *Deployment branches* à `main` (un workflow lancé depuis une autre branche n'aura pas les secrets).
+   Y ajouter les secrets, et la variable dans *Settings › Secrets and variables › Actions* :
 
    | Type | Nom | Valeur |
    |---|---|---|
-   | Secret | `SIGNING_KEY` | la clé privée (étape 1) |
-   | Secret | `SERVER_URL` | ex. `https://1-2-3-4.sslip.io` |
-   | Secret | `DEPLOY_TOKEN` | le jeton affiché ci-dessus |
-   | Variable | `UPDATE_PUBKEY` | la clé publique (étape 1) |
+   | Secret (environnement `release`) | `SIGNING_KEY` | la clé privée (étape 1) |
+   | Secret (environnement `release`) | `SERVER_URL` | ex. `https://1-2-3-4.sslip.io` |
+   | Secret (environnement `release`) | `DEPLOY_TOKEN` | le jeton affiché ci-dessus |
+   | Variable (dépôt) | `UPDATE_PUBKEY` | la clé publique (étape 1) |
 
 3. Créer un token GitHub *fine-grained* limité au dépôt (Actions : lecture/écriture, Contents : lecture)
    et le coller dans la fenêtre **Mises à jour** de la page admin.
 
 > [!WARNING]
 > La clé de signature est stockée dans les secrets GitHub : protégez le compte propriétaire du dépôt
-> (double authentification), car il permet de publier une mise à jour.
+> (double authentification), car il permet de publier une mise à jour. Protégez aussi `main`
+> (modifications par pull request validée) : quiconque peut y modifier le workflow peut utiliser la clé.
 
-Si la branche `main` est protégée, autorisez GitHub Actions à y pousser : semantic-release y commite le
-numéro de version et le `CHANGELOG.md`.
+Si la branche `main` est protégée, autorisez GitHub Actions à y pousser (contournement de la règle) :
+semantic-release y commite le numéro de version et le `CHANGELOG.md`.
 
 </details>
 

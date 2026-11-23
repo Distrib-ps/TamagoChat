@@ -171,7 +171,7 @@ def main():
         return time.time()
 
     def latest_release(platform="win"):
-        platform = platform if platform in PLATFORMS else "win"
+        platform = platform if isinstance(platform, str) and platform in PLATFORMS else "win"
         path = os.path.join(RELEASES, PLATFORMS[platform]["latest"])
         cache = release_cache.setdefault(platform, {"mtime": None, "data": None})
         try:
@@ -562,7 +562,9 @@ def main():
         rel = latest_release(platform)
         if rel and rel["version"] == v and rel["sha256"] == sha:
             return web.json_response({"ok": True, "version": v, "already": True})   # relance
-        if rel and version_tuple(v) <= version_tuple(rel["version"]):
+        # même numéro mais autre fichier : publication relancée après un échec (la compilation
+        # n'est pas reproductible à l'octet près) ; on remplace, c'est le même code source
+        if rel and version_tuple(v) < version_tuple(rel["version"]):
             raise web.HTTPConflict(text=f"la version doit être plus grande que {rel['version']}")
         name = plat["file"].format(v=v)
         path = os.path.join(RELEASES, name)
