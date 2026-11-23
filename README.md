@@ -160,7 +160,7 @@ flowchart LR
     D --> E[Signature Ed25519]
     E --> F[Serveur]
     F --> G[Chats mis à jour]
-    E --> H[Release GitHub + CHANGELOG]
+    E --> H[Tag + release GitHub]
 ```
 
 Compter environ 5 minutes ; les chats connectés se mettent à jour dans la minute qui suit.
@@ -262,8 +262,8 @@ et le serveur revérifie la signature avant de la publier.
 > (double authentification), car il permet de publier une mise à jour. Protégez aussi `main`
 > (modifications par pull request validée) : quiconque peut y modifier le workflow peut utiliser la clé.
 
-Si la branche `main` est protégée, autorisez GitHub Actions à y pousser (contournement de la règle) :
-semantic-release y commite le numéro de version et le `CHANGELOG.md`.
+La branche `main` peut être protégée sans exception pour GitHub Actions : la publication ne pousse
+aucun commit, seulement un tag `vX.Y.Z` et une release GitHub (avec les notes de version).
 
 </details>
 
