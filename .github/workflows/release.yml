@@ -1,60 +1,192 @@
-# Compile, signe et publie TamagoChat.exe sur le serveur.
-# Lancé depuis la page admin (bouton « Déployer ») ou depuis l'onglet Actions de GitHub.
+# Publie une nouvelle version de TamagoChat (Windows et Mac).
+# Lancé depuis la page admin (bouton 🚀) ou depuis l'onglet Actions de GitHub.
+#
+# Le numéro de version est calculé par semantic-release d'après les messages de commit
+# (Conventional Commits) depuis la dernière version :
+#   fix: ...  -> 1.1.2 -> 1.1.3      feat: ...  -> 1.2.0      feat!: ... -> 2.0.0
+#   chore:, docs:, refactor:...      -> rien à publier
+#
+# 1. version : tests, puis semantic-release --dry-run calcule le prochain numéro
+# 2. build   : compile et signe l'app Windows (.exe) et Mac (.app zippée)
+# 3. release : envoie les deux au serveur (/api/release, qui revérifie la signature ; GitHub n'a
+#              aucun accès SSH), puis semantic-release crée le tag, le CHANGELOG et la release GitHub
+#
 # Secrets du dépôt : SIGNING_KEY, DEPLOY_TOKEN, SERVER_URL · Variable : UPDATE_PUBKEY (voir README).
 name: Publier une version
-run-name: Publier ${{ inputs.version || 'la version suivante' }}
+run-name: Publier la version suivante
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version (vide = la suivante, ex. 1.2.0)"
-        required: false
-        default: ""
 
 permissions:
-  contents: write   # uniquement pour créer le tag de la version
+  contents: write   # tag, commit de version (CHANGELOG) et release GitHub
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  publier:
-    runs-on: windows-latest
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Tests
+        run: python -m unittest discover -s tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: next
+        run: |
+          version=$(cat .next-version 2>/dev/null || true)
+          if [ -z "$version" ]; then
+            echo "::error::Rien à publier : aucun commit « fix: » ou « feat: » depuis la dernière version."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Nouvelle version : $version" >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            python: python
+          - os: macos-latest
+            python: python3
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      PY: ${{ matrix.python }}
+      MAC_PYTHON: "3.13.12"   # python.org : universel (Intel + Apple Silicon) et Tk 8.6
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Python (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - name: Choix de la version et configuration
-        id: prep
-        env:
-          SERVER_URL: ${{ secrets.SERVER_URL }}
-          UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: python ci_release.py prepare
-
-      - name: Compilation
+          python-version: "3.13"
+      - name: Python de python.org (Mac ; Tk 9 n'affiche pas les fenêtres transparentes)
+        if: runner.os == 'macOS'
         run: |
-          python -m pip install --disable-pip-version-check -q pyinstaller==6.22.3
-          $ico = "$PWD\chat.ico"
-          python -m PyInstaller --noconfirm --onefile --windowed --log-level WARN --name TamagoChat --icon $ico --add-data "$ico;." --workpath "$env:RUNNER_TEMP\build" --specpath "$env:RUNNER_TEMP\build" chat.pyw
+          curl -fsSLo python.pkg "https://www.python.org/ftp/python/$MAC_PYTHON/python-$MAC_PYTHON-macos11.pkg"
+          sudo installer -pkg python.pkg -target /
+          rm python.pkg
+          echo "/Library/Frameworks/Python.framework/Versions/${MAC_PYTHON%.*}/bin" >> "$GITHUB_PATH"
 
-      - name: Signature et envoi au serveur
+      - name: Préparation
         env:
           SERVER_URL: ${{ secrets.SERVER_URL }}
           UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
+        run: |
+          $PY -m pip install --disable-pip-version-check -q pyinstaller==6.22.3 pillow
+          # adresse du serveur et clé publique intégrées à l'app
+          printf 'SERVER_URL = "%s"\nUPDATE_PUBKEY = "%s"\n' "${SERVER_URL%/}" "$UPDATE_PUBKEY" > local_config.py
+          perl -pi -e 's/^__version__ = "[^"]*"/__version__ = "$ENV{VERSION}"/' tamagochat/__init__.py
+          mkdir release
+
+      - name: Compilation Windows
+        if: runner.os == 'Windows'
+        run: |
+          $PY -m PyInstaller --noconfirm --onefile --windowed --log-level WARN --name TamagoChat \
+            --icon tamagochat/assets/chat.ico --add-data "tamagochat/assets/chat.ico;." chat.pyw
+          cp dist/TamagoChat.exe "release/TamagoChat-$VERSION.exe"
+
+      - name: Compilation Mac
+        if: runner.os == 'macOS'
+        run: |
+          $PY -m PyInstaller --noconfirm --windowed --log-level WARN --name TamagoChat \
+            --target-arch universal2 --osx-bundle-identifier fr.tamagochat.app \
+            --icon tamagochat/assets/chat.ico --add-data "tamagochat/assets/chat.ico:." chat.pyw
+          plist=dist/TamagoChat.app/Contents/Info.plist
+          plutil -replace LSUIElement -bool true "$plist"       # pas d'icône dans le Dock
+          plutil -replace CFBundleShortVersionString -string "$VERSION" "$plist"
+          plutil -replace CFBundleVersion -string "$VERSION" "$plist"
+          codesign --force --deep --sign - dist/TamagoChat.app  # signature ad hoc (plist modifié)
+          ditto -c -k --sequesterRsrc --keepParent dist/TamagoChat.app "release/TamagoChat-$VERSION-mac.zip"
+
+      - name: Signature (seules les versions signées sont installées par les chats)
+        env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
-        run: python ci_release.py upload
-
-      - name: Tag de la version
-        env:
-          VERSION: ${{ steps.prep.outputs.version }}
+          UPDATE_PUBKEY: ${{ vars.UPDATE_PUBKEY }}
         run: |
-          git tag "v$env:VERSION"
-          git push origin "v$env:VERSION"
+          $PY - <<'EOF'
+          import glob, hashlib, json, os
+          from tamagochat import ed25519
+          version, secret = os.environ["VERSION"], bytes.fromhex(os.environ["SIGNING_KEY"].strip())
+          if ed25519.public_key(secret).hex() != os.environ["UPDATE_PUBKEY"]:
+              raise SystemExit("SIGNING_KEY ne correspond pas à UPDATE_PUBKEY")
+          for path in glob.glob("release/TamagoChat-*"):
+              mac = path.endswith("-mac.zip")
+              sha = hashlib.sha256(open(path, "rb").read()).hexdigest()
+              tag = "minou-update-mac" if mac else "minou-update"
+              sig = ed25519.sign(secret, f"{tag}|{version}|{sha}".encode()).hex()
+              with open(path + ".json", "w") as f:
+                  json.dump({"platform": "mac" if mac else "win", "version": version,
+                             "sha256": sha, "sig": sig}, f)
+              print("signé :", path)
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ runner.os }}
+          path: release/
+          if-no-files-found: error
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+
+      - name: Envoi au serveur (il revérifie la signature ; les chats se mettent à jour dans la minute)
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          for meta in release/TamagoChat-*.json; do
+            file="${meta%.json}"
+            curl --fail-with-body -sS --max-time 300 -X POST "${SERVER_URL%/}/api/release" \
+              -H "Authorization: Bearer $DEPLOY_TOKEN" -H "Content-Type: application/octet-stream" \
+              -H "X-Platform: $(jq -r .platform "$meta")" -H "X-Version: $VERSION" \
+              -H "X-Sha256: $(jq -r .sha256 "$meta")" -H "X-Signature: $(jq -r .sig "$meta")" \
+              -H "X-Commit: $GITHUB_SHA" -H "User-Agent: TamagoChat-CI" \
+              --data-binary "@$file"
+            echo
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Tag, CHANGELOG et release GitHub
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,12 +1,19 @@
-.venv/
-dist/
-build/
 __pycache__/
-*.spec
 *.pyc
+.venv/
+# compilation (PyInstaller) et publication
+build/
+dist/
+release/
+*.spec
+# semantic-release
+node_modules/
+.next-version
 # secrets / données du serveur : ne jamais publier
 *.key
+local_config.py
 serveur/config.json
 serveur/*.db*
 serveur/releases/
-local_config.py
+# macOS
+.DS_Store

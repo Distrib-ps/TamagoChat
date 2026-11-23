@@ -1,0 +1,61 @@
+{
+  "branches": [
+    "main"
+  ],
+  "tagFormat": "v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "verifyReleaseCmd": "echo ${nextRelease.version} > .next-version",
+        "prepareCmd": "perl -pi -e 's/^__version__ = \"[^\"]*\"/__version__ = \"${nextRelease.version}\"/' tamagochat/__init__.py"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "tamagochat/__init__.py",
+          "CHANGELOG.md"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "release/*.exe",
+            "label": "Windows (TamagoChat.exe)"
+          },
+          {
+            "path": "release/*-mac.zip",
+            "label": "macOS (TamagoChat.app)"
+          }
+        ],
+        "successComment": false,
+        "failComment": false,
+        "releasedLabels": false
+      }
+    ]
+  ]
+}

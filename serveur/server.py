@@ -36,7 +36,13 @@ GITHUB_API = "https://api.github.com"
 WORKFLOW = "release.yml"
 MAX_PHRASES_JSON = 200_000
 HEX32 = re.compile(r"^[0-9a-f]{32}$")
-RELEASE_RE = re.compile(r"^(Minou|TamagoChat)-\d+(\.\d+){1,3}\.exe$")
+RELEASE_RE = re.compile(r"^(Minou|TamagoChat)-\d+(\.\d+){1,3}(\.exe|-mac\.zip)$")
+# par plateforme : fichier de la dernière version, nom des fichiers, message signé
+# (les chats Windows déjà installés n'envoient pas de plateforme : "win" par défaut)
+PLATFORMS = {
+    "win": {"latest": "latest.json", "file": "TamagoChat-{v}.exe", "tag": "minou-update"},
+    "mac": {"latest": "latest-mac.json", "file": "TamagoChat-{v}-mac.zip", "tag": "minou-update-mac"},
+}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS cats(
@@ -159,29 +165,31 @@ def main():
     db = db_connect()
     events = {}           # cat_id -> asyncio.Event (réveille l'attente du chat)
     failed_logins = {}    # ip -> [nombre, début]
-    release_cache = {"mtime": None, "data": None}
+    release_cache = {}    # plateforme -> {"mtime": ..., "data": ...}
 
     def now():
         return time.time()
 
-    def latest_release():
-        path = os.path.join(RELEASES, "latest.json")
+    def latest_release(platform="win"):
+        platform = platform if platform in PLATFORMS else "win"
+        path = os.path.join(RELEASES, PLATFORMS[platform]["latest"])
+        cache = release_cache.setdefault(platform, {"mtime": None, "data": None})
         try:
             mtime = os.path.getmtime(path)
         except OSError:
             return None
-        if mtime != release_cache["mtime"]:
+        if mtime != cache["mtime"]:
             try:
                 with open(path, encoding="utf-8") as f:
                     rel = json.load(f)
-                release_cache["data"] = {
+                cache["data"] = {
                     "version": rel["version"], "url": "/download/" + rel["file"],
                     "sha256": rel["sha256"], "size": rel["size"], "sig": rel["sig"],
                     "date": rel.get("date"), "commit": rel.get("commit")}
             except Exception:
-                release_cache["data"] = None
-            release_cache["mtime"] = mtime
-        return release_cache["data"]
+                cache["data"] = None
+            cache["mtime"] = mtime
+        return cache["data"]
 
     async def read_json(req):
         try:
@@ -260,7 +268,8 @@ def main():
                        f"WHERE id IN ({','.join('?' * len(ids))})", (now(), *ids))
         db.execute("UPDATE cats SET last_seen=? WHERE id=?", (now(), cid))
         db.commit()
-        return web.json_response({"messages": msgs, "update": latest_release()})
+        return web.json_response({"messages": msgs,
+                                  "update": latest_release(body.get("platform"))})
 
     async def api_reply(req):
         body = await read_json(req)
@@ -273,7 +282,7 @@ def main():
         return web.json_response({"ok": True})
 
     async def api_latest(req):
-        return web.json_response({"update": latest_release()})
+        return web.json_response({"update": latest_release(req.query.get("platform"))})
 
     async def download(req):
         name = req.match_info["name"]
@@ -354,7 +363,8 @@ def main():
                          "allow_settings": (None if r["allow_settings"] is None
                                             else bool(r["allow_settings"])),
                          "phrases_at": r["phrases_at"]})
-        return web.json_response({"cats": cats, "release": latest_release(), "now": t})
+        return web.json_response({"cats": cats, "release": latest_release(),
+                                  "release_mac": latest_release("mac"), "now": t})
 
     async def admin_feed(req):
         check_admin(req)
@@ -465,7 +475,7 @@ def main():
         check_admin(req)
         cfg = load_config()
         repo, rel = cfg.get("github_repo"), latest_release()
-        out = {"release": rel, "repo": repo, "has_token": bool(cfg.get("github_token")),
+        out = {"release": rel, "release_mac": latest_release("mac"), "repo": repo, "has_token": bool(cfg.get("github_token")),
                "has_deploy": bool(cfg.get("deploy_hash")), "commits": [], "runs": [],
                "base_known": bool(rel and rel.get("commit")), "error": None}
         if not (repo and out["has_token"]):
@@ -497,19 +507,12 @@ def main():
 
     async def admin_deploy(req):
         check_admin(req)
-        body = await read_json(req)
         cfg = load_config()
         if not cfg.get("github_repo") or not cfg.get("deploy_hash"):
             raise web.HTTPBadRequest(text="déploiement non configuré sur le serveur")
-        v = clip(body.get("version"), 20).strip().lstrip("v")
-        if v:
-            rel = latest_release()
-            if not VERSION_RE.fullmatch(v):
-                raise web.HTTPBadRequest(text="version invalide (exemple : 1.2.0)")
-            if rel and version_tuple(v) <= version_tuple(rel["version"]):
-                raise web.HTTPBadRequest(text=f"la version doit être plus grande que {rel['version']}")
+        # le numéro de version est calculé par semantic-release d'après les commits
         await github("POST", f"/repos/{cfg['github_repo']}/actions/workflows/{WORKFLOW}/dispatches",
-                     {"ref": "main", "inputs": {"version": v}})
+                     {"ref": "main"})
         gh_cache["data"] = None
         return web.json_response({"ok": True})
 
@@ -534,9 +537,13 @@ def main():
         return web.json_response({"ok": True})
 
     async def api_release(req):
-        """Reçoit un exe compilé et signé par GitHub Actions (jeton DEPLOY_TOKEN).
-        Le serveur revérifie la signature avec la clé publique avant de le publier."""
-        import ed25519_min
+        """Reçoit une version compilée et signée par GitHub Actions (jeton DEPLOY_TOKEN) :
+        l'exe Windows ou le .zip Mac (en-tête X-Platform). Le serveur revérifie la signature
+        avec la clé publique avant de la publier."""
+        try:
+            import ed25519           # copie de tamagochat/ed25519.py
+        except ImportError:
+            import ed25519_min as ed25519   # ancien nom
         cfg = load_config()
         auth = req.headers.get("Authorization", "")
         if (not cfg.get("deploy_hash") or not auth.startswith("Bearer ")
@@ -547,13 +554,17 @@ def main():
         sha = req.headers.get("X-Sha256", "").lower()
         sig = req.headers.get("X-Signature", "").lower()
         commit = req.headers.get("X-Commit", "").lower()
+        platform = req.headers.get("X-Platform", "win")
         if (not VERSION_RE.fullmatch(v) or not re.fullmatch(r"[0-9a-f]{64}", sha)
-                or not re.fullmatch(r"[0-9a-f]{128}", sig)):
+                or not re.fullmatch(r"[0-9a-f]{128}", sig) or platform not in PLATFORMS):
             raise web.HTTPBadRequest(text="en-têtes invalides")
-        rel = latest_release()
+        plat = PLATFORMS[platform]
+        rel = latest_release(platform)
+        if rel and rel["version"] == v and rel["sha256"] == sha:
+            return web.json_response({"ok": True, "version": v, "already": True})   # relance
         if rel and version_tuple(v) <= version_tuple(rel["version"]):
             raise web.HTTPConflict(text=f"la version doit être plus grande que {rel['version']}")
-        name = f"TamagoChat-{v}.exe"
+        name = plat["file"].format(v=v)
         path = os.path.join(RELEASES, name)
         tmp = path + ".part"
         h, size = hashlib.sha256(), 0
@@ -567,8 +578,8 @@ def main():
                     h.update(chunk)
             if h.hexdigest() != sha:
                 raise web.HTTPBadRequest(text="fichier corrompu (sha256)")
-            if not ed25519_min.verify(bytes.fromhex(cfg.get("update_pubkey", "")),
-                                      f"minou-update|{v}|{sha}".encode(), bytes.fromhex(sig)):
+            if not ed25519.verify(bytes.fromhex(cfg.get("update_pubkey", "")),
+                                  f"{plat['tag']}|{v}|{sha}".encode(), bytes.fromhex(sig)):
                 raise web.HTTPBadRequest(text="signature invalide : refusé")
             os.replace(tmp, path)
         finally:
@@ -577,17 +588,18 @@ def main():
         latest = {"version": v, "file": name, "sha256": sha, "size": size, "sig": sig,
                   "date": time.strftime("%Y-%m-%dT%H:%M:%S"),
                   "commit": commit if re.fullmatch(r"[0-9a-f]{40}", commit) else None}
-        lj = os.path.join(RELEASES, "latest.json")
+        lj = os.path.join(RELEASES, plat["latest"])
         with open(lj + ".tmp", "w", encoding="utf-8") as f:
             json.dump(latest, f)
         os.replace(lj + ".tmp", lj)
-        exes = sorted((p for p in os.listdir(RELEASES) if RELEASE_RE.match(p)),
-                      key=lambda p: os.path.getmtime(os.path.join(RELEASES, p)), reverse=True)
-        for old in exes[KEEP_RELEASES:]:
+        same = (p for p in os.listdir(RELEASES)                     # même plateforme
+                if RELEASE_RE.match(p) and p.endswith("-mac.zip") == (platform == "mac"))
+        files = sorted(same, key=lambda p: os.path.getmtime(os.path.join(RELEASES, p)), reverse=True)
+        for old in files[KEEP_RELEASES:]:
             if old != name:
                 os.remove(os.path.join(RELEASES, old))
         gh_cache["data"] = None
-        return web.json_response({"ok": True, "version": v, "size": size})
+        return web.json_response({"ok": True, "version": v, "platform": platform, "size": size})
 
     async def root(req):
         raise web.HTTPFound("/admin")
