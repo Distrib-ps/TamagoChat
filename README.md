@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🐱 TamagoChat
+<img src="docs/images/logo.png" alt="Logo TamagoChat : Minou, le chat en pixel art" width="140">
+
+# TamagoChat
 
 **Un chat tamagotchi en pixel art qui vit sur votre bureau.**
 
@@ -8,8 +10,6 @@
 ![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
-
-<img src="docs/images/parle.png" alt="Minou, le chat de TamagoChat, qui parle dans une bulle" width="380">
 
 [Installer](#installation) · [Utiliser](#utilisation) · [Développer](#développement) · [Publier](#publier-une-version) · [Serveur](#serveur-optionnel)
 
@@ -31,7 +31,7 @@ aussi lui envoyer des messages et des bêtises à distance depuis une page web.
       <sub>Des mouches apparaissent de temps en temps : il les traque et bondit pour les gober.</sub>
     </td>
     <td width="33%" valign="top">
-      <img src="docs/images/pelote.png" alt="Le chat poursuit sa pelote"><br>
+      <img src="docs/images/joueur.png" alt="Le chat poursuit sa pelote"><br>
       <b>Joueur</b><br>
       <sub>Pelote, crises de folie, grands sauts : il court partout, d'un écran à l'autre.</sub>
     </td>
