@@ -4,7 +4,7 @@
 
 **Un chat tamagotchi en pixel art qui vit sur votre bureau.**
 
-[![Dernière version](https://img.shields.io/github/v/release/Distrib-ps/TamagoChat?label=version)](https://github.com/Distrib-ps/TamagoChat/releases/latest)
+[![Dernière version](https://img.shields.io/github/v/tag/Distrib-ps/TamagoChat?label=version)](https://github.com/Distrib-ps/TamagoChat/tags)
 ![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
@@ -19,15 +19,38 @@ Minou se promène au-dessus de la barre des tâches (Windows) ou du Dock (macOS)
 nourrit, il parle, chasse les mouches et pique des crises de folie. Avec le serveur optionnel, on peut
 aussi lui envoyer des messages et des bêtises à distance depuis une page web.
 
+<table>
+  <tr>
+    <td><img src="docs/images/parle.png" alt="Le chat parle dans une bulle"></td>
+    <td><img src="docs/images/mouches.png" alt="Le chat chasse une mouche"></td>
+    <td><img src="docs/images/pelote.png" alt="Le chat joue à la pelote"></td>
+  </tr>
+  <tr>
+    <td align="center">Il parle</td>
+    <td align="center">Il chasse les mouches</td>
+    <td align="center">Il joue à la pelote</td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/mange.png" alt="Le chat mange"></td>
+    <td><img src="docs/images/dodo.png" alt="Le chat fait la sieste"></td>
+    <td><img src="docs/images/etat.png" alt="Fenêtre d'état du chat"></td>
+  </tr>
+  <tr>
+    <td align="center">Il mange</td>
+    <td align="center">Il fait la sieste</td>
+    <td align="center">Ses jauges</td>
+  </tr>
+</table>
+
 ## Fonctionnalités
 
-- 🐾 **Vivant** : il marche, dort, joue à la pelote, bondit sur les mouches, passe d'un écran à l'autre
-- 💬 **Bavard** : des phrases pour chaque situation (faim, sieste, caresse, matin…), toutes modifiables
-- 📊 **Tamagotchi** : satiété, hydratation, bonheur et énergie baissent avec le temps (il ne meurt jamais,
+- **Vivant** : il marche, dort, joue à la pelote, bondit sur les mouches, passe d'un écran à l'autre
+- **Bavard** : des phrases pour chaque situation (faim, sieste, caresse, matin…), toutes modifiables
+- **Tamagotchi** : satiété, hydratation, bonheur et énergie baissent avec le temps (il ne meurt jamais,
   il devient juste grognon)
-- 🌐 **À distance** : messages, soins, bêtises et réglages depuis une page admin protégée
-- 🔄 **Mises à jour automatiques et signées** : un chat n'installe qu'une version signée par votre clé
-- 🖥️ **Windows 10 / 11 et macOS**, un ou plusieurs écrans
+- **À distance** : messages, soins, bêtises et réglages depuis une page admin protégée
+- **Mises à jour automatiques et signées** : un chat n'installe qu'une version signée par votre clé
+- **Windows 10 / 11 et macOS**, un ou plusieurs écrans
 
 ## Installation
 
@@ -102,7 +125,7 @@ serveur/                 serveur aiohttp + SQLite, page admin, systemd, nginx
 
 ## Publier une version
 
-Le bouton **🚀** de la page admin affiche la version publiée, les changements pas encore déployés et le
+Le bouton **Mises à jour** de la page admin (en haut à droite) affiche la version publiée, les changements pas encore déployés et le
 numéro de la prochaine version, puis lance la publication en un clic. On peut aussi la lancer depuis
 l'onglet *Actions* de GitHub (workflow « Publier une version »).
 
@@ -118,7 +141,7 @@ commit ([Conventional Commits](https://www.conventionalcommits.org/fr/)) :
 
 ```mermaid
 flowchart LR
-    A[🚀 Page admin] --> B[GitHub Actions]
+    A[Page admin] --> B[GitHub Actions]
     B --> C[Tests]
     C --> D[Compilation Windows + macOS]
     D --> E[Signature Ed25519]
@@ -217,7 +240,7 @@ et le serveur revérifie la signature avant de la publier.
    | Variable | `UPDATE_PUBKEY` | la clé publique (étape 1) |
 
 3. Créer un token GitHub *fine-grained* limité au dépôt (Actions : lecture/écriture, Contents : lecture)
-   et le coller dans la fenêtre 🚀 de la page admin.
+   et le coller dans la fenêtre **Mises à jour** de la page admin.
 
 > [!WARNING]
 > La clé de signature est stockée dans les secrets GitHub : protégez le compte propriétaire du dépôt
