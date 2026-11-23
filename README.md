@@ -1,91 +1,210 @@
-# TamagoChat, le chat du bureau
+<div align="center">
 
-Un chat tamagotchi en pixel art (il s'appelle Minou par défaut, renommable) qui vit au-dessus de la barre
-des tâches de Windows. On le caresse, on le nourrit, il parle, chasse les mouches, pique des crises de folie...
-et, si on le souhaite, on peut lui envoyer des messages et des bêtises à distance depuis une page web.
+<img src="docs/images/logo.png" alt="Logo TamagoChat : Minou, le chat en pixel art" width="140">
 
-**Windows uniquement** (10 / 11, un ou plusieurs écrans).
+# TamagoChat
+
+**Un chat tamagotchi en pixel art qui vit sur votre bureau.**
+
+[![Dernière version](https://img.shields.io/github/v/tag/Distrib-ps/TamagoChat?label=version)](https://github.com/Distrib-ps/TamagoChat/tags)
+![Plateformes](https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
+
+[Installer](#installation) · [Utiliser](#utilisation) · [Développer](#développement) · [Publier](#publier-une-version) · [Serveur](#serveur-optionnel)
+
+</div>
+
+---
+
+Minou se promène au-dessus de la barre des tâches (Windows) ou du Dock (macOS). On le caresse, on le
+nourrit, il parle, chasse les mouches et pique des crises de folie. Avec le serveur optionnel, on peut
+aussi lui envoyer des messages et des bêtises à distance depuis une page web.
+
+## Fonctionnalités
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/images/chasse.png" alt="Le chat repère une mouche"><br>
+      <b>Chasseur</b><br>
+      <sub>Des mouches apparaissent de temps en temps : il les traque et bondit pour les gober.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/joueur.png" alt="Le chat poursuit sa pelote"><br>
+      <b>Joueur</b><br>
+      <sub>Pelote, crises de folie, grands sauts : il court partout, d'un écran à l'autre.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/caresse.png" alt="Le chat ronronne sous les caresses"><br>
+      <b>Câlin</b><br>
+      <sub>Un clic pour le caresser ; il réagit, et finit par réclamer un peu d'espace.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/images/repas.png" alt="Le chat mange dans sa gamelle"><br>
+      <b>Gourmand</b><br>
+      <sub>Il faut le nourrir et lui donner à boire, sinon il le fait savoir.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/sieste.png" alt="Le chat fait la sieste"><br>
+      <b>Dormeur</b><br>
+      <sub>Quand il est fatigué, il fait une sieste pour recharger son énergie.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/images/etat.png" alt="La fenêtre d'état avec ses quatre jauges"><br>
+      <b>Tamagotchi</b><br>
+      <sub>Satiété, hydratation, bonheur et énergie baissent avec le temps. Il ne meurt jamais, il devient juste grognon.</sub>
+    </td>
+  </tr>
+</table>
+
+- **Bavard** : des phrases pour chaque situation (faim, sieste, matin…), toutes modifiables
+- **À distance** : messages, soins, bêtises et réglages depuis une page admin protégée
+- **Mises à jour automatiques et signées** : un chat n'installe qu'une version signée par votre clé
+- **Windows 10 / 11 et macOS**, un ou plusieurs écrans
+
+## Installation
+
+Téléchargez la dernière version sur la page [Releases](https://github.com/Distrib-ps/TamagoChat/releases/latest).
+
+| Système | Fichier | Installation |
+|---|---|---|
+| Windows | `TamagoChat-x.y.z.exe` | Lancer le fichier, rien à installer |
+| macOS | `TamagoChat-x.y.z-mac.zip` | Décompresser, glisser `TamagoChat` dans **Applications**, puis la première fois : clic droit › **Ouvrir** |
+
+Le chat se met ensuite à jour tout seul.
 
 ## Utilisation
 
-- **Clic gauche** : caresse · **Glisser** : déplacer (on peut le lancer, il retombe) · **Clic droit** : menu
-- Menu : manger, boire, jouer avec la pelote, sieste, crise de folie, mouches, état, renommer, phrases perso, options, quitter
-- Options : promenade, fréquence des phrases spontanées (30 s à 30 min, perso, ou jamais), mode FOU,
-  mouches, premier plan, démarrage avec Windows, taille
-- Mouches : de temps en temps des mouches apparaissent, il les traque et bondit pour les gober
-  (clic sur une mouche = l'écraser)
-- Mode FOU : de temps en temps il court et saute partout sur l'écran (et d'un écran à l'autre)
-- Phrases : chaque situation (faim, sieste, caresse, matin...) a ses phrases, modifiables dans « Ses phrases... »
-  (`{name}` est remplacé par son nom)
+| Action | Effet |
+|---|---|
+| Clic gauche | Caresser |
+| Glisser | Déplacer (on peut le lancer, il retombe) |
+| Clic droit (ctrl+clic sur Mac) | Menu : manger, boire, jouer, sieste, folie, mouches, état, renommer, phrases, options |
+| Clic sur une mouche | L'écraser (il n'aime pas qu'on lui vole son goûter) |
 
-Ses jauges (satiété, hydratation, bonheur, énergie) baissent avec le temps, même app fermée (plus lentement,
-et sans descendre sous 15). Il ne meurt jamais, il devient juste grognon.
+Les options permettent de régler la promenade, la fréquence des phrases, le mode FOU, les mouches,
+le premier plan, la taille et le lancement au démarrage.
 
-Sauvegarde : `%APPDATA%\ChatTamagotchi\save.json` · erreurs éventuelles : `erreurs.log` dans le même dossier.
+La sauvegarde (`save.json`) et le journal d'erreurs (`erreurs.log`) se trouvent dans
+`%APPDATA%\ChatTamagotchi` (Windows) ou `~/Library/Application Support/ChatTamagotchi` (macOS).
 
-## Lancer depuis le code
+## Développement
 
-Python 3.10+ (avec tkinter, inclus dans l'installeur officiel de python.org). Aucune autre dépendance.
+Prérequis : Python 3.10+ de [python.org](https://www.python.org/downloads/), sans autre dépendance.
 
-```powershell
-pythonw chat.pyw
+```bash
+python3 chat.pyw       # macOS
+python chat.pyw        # Windows (ou double-clic sur chat.pyw)
+
+python -m unittest discover -s tests    # tests
 ```
 
-Sans `local_config.py`, le chat fonctionne entièrement hors ligne.
+> [!NOTE]
+> Sur macOS, utilisez bien le Python de python.org : celui de Homebrew embarque Tk 9, qui n'affiche pas
+> les fenêtres transparentes.
 
-## Fabriquer le .exe à partager
+Sans `local_config.py`, le chat fonctionne entièrement hors ligne. Pour le relier à un serveur, copiez
+`local_config.example.py` en `local_config.py` et remplissez-le.
 
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\pip install pyinstaller
-$ico = "$PWD\chat.ico"
-.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --onefile --windowed --name TamagoChat --icon $ico --add-data "$ico;." --workpath "$env:TEMP\minou-build" --specpath "$env:TEMP\minou-build" chat.pyw
+<details>
+<summary><b>Organisation du code</b></summary>
+
+```
+chat.pyw                 lanceur (Windows et macOS)
+tamagochat/
+├── app.py               fenêtre, boucle principale, souris, écrans, sauvegarde
+├── behavior.py          comportement autonome : jauges, paroles, décisions, états
+├── actions.py           soins, jeux et pouvoirs envoyés depuis la page admin
+├── hunt.py, fly.py      chasse aux mouches
+├── render.py            dessin en pixel art (sprites.py)
+├── bubble.py            bulle de dialogue
+├── menu.py, dialogs.py  menu du clic droit et fenêtres annexes
+├── remote.py            lien avec le serveur et mises à jour signées
+├── config.py            réglages, chemins
+├── phrases.py           phrases par situation
+├── storage.py           sauvegarde et journal d'erreurs
+├── ed25519.py           signatures Ed25519 en Python pur
+└── desktop/             tout ce qui dépend du système, même interface
+    ├── windows.py
+    └── macos.py
+tests/                   tests unitaires
+serveur/                 serveur aiohttp + SQLite, page admin, systemd, nginx
 ```
 
-Résultat : `dist\TamagoChat.exe` (fichier unique, rien à installer). Chaque personne a son propre chat et sa
-propre sauvegarde. Si `local_config.py` existe, son contenu est intégré à l'exe.
+</details>
 
-## Messages à distance et mises à jour automatiques (optionnel)
+## Publier une version
 
-Il faut un petit serveur Linux (un VPS suffit, ~40 Mo de RAM) avec nginx. Il sert à :
+Le bouton **Mises à jour** de la page admin (en haut à droite) affiche la version publiée, les changements pas encore déployés et le
+numéro de la prochaine version, puis lance la publication en un clic. On peut aussi la lancer depuis
+l'onglet *Actions* de GitHub (workflow « Publier une version »).
 
-- **la page admin** `https://<ton serveur>/admin` (protégée par mot de passe), en 3 onglets :
-  - *Messages & actions* : messages (signés ou non, durée de bulle réglable), soins (manger, boire, caresse,
-    pluie de câlins, pelote, sieste...) et bêtises (folie XXL, nuée de mouches, grand saut, tomber du ciel,
-    changer d'écran, chasser la souris, cache-cache), réponses des amis
-  - *Réglages & jauges* : renommer le chat, phrases spontanées, mode FOU, mouches, promenade, premier plan,
-    taille ; régler ses 4 jauges
-  - *Phrases* : voir / ajouter / modifier / supprimer ses phrases par situation, les lui faire dire
-- **les mises à jour automatiques** : chaque nouvelle version est signée (Ed25519) ; un chat n'installe
-  qu'un exe signé par ta clé privée, même si le serveur était compromis.
+Le numéro est calculé par [semantic-release](https://semantic-release.org) à partir des messages de
+commit ([Conventional Commits](https://www.conventionalcommits.org/fr/)) :
 
-Côté chat, le propriétaire garde la main dans Options : « Recevoir des messages à distance »,
-« Mises à jour automatiques », « Autoriser les réglages à distance » (réglages, phrases, jauges).
-Il répond avec clic droit > « Envoyer un message... ».
+| Commit | Exemple | Version |
+|---|---|---|
+| `fix:` | `fix: le chat ne tombe plus de l'écran` | 1.1.2 → 1.1.3 |
+| `feat:` | `feat: nouvelle bêtise « danse »` | 1.1.2 → 1.2.0 |
+| `feat!:` | `feat!: nouveau format de sauvegarde` | 1.1.2 → 2.0.0 |
+| `chore:`, `docs:`, `refactor:`… | `docs: corrige une faute` | aucune |
 
-### 1. Clé de signature (sur ton PC, une seule fois)
-
-Depuis le dossier du projet :
-
-```powershell
-python -c "import os, secrets, ed25519_min as e; d = os.path.expanduser('~/.minou'); os.makedirs(d, exist_ok=True); s = secrets.token_bytes(32); open(os.path.join(d, 'signing.key'), 'x').write(s.hex()); print('UPDATE_PUBKEY =', e.public_key(s).hex())"
+```mermaid
+flowchart LR
+    A[Page admin] --> B[GitHub Actions]
+    B --> C[Tests]
+    C --> D[Compilation Windows + macOS]
+    D --> E[Signature Ed25519]
+    E --> F[Serveur]
+    F --> G[Chats mis à jour]
+    E --> H[Tag + release GitHub]
 ```
 
-La clé privée est écrite dans `~\.minou\signing.key` : **ne la partage jamais et sauvegarde-la**
-(la perdre empêche de publier des mises à jour : il faudrait redistribuer un exe à la main).
-Garde la ligne `UPDATE_PUBKEY = ...` affichée pour l'étape 3.
+Compter environ 5 minutes ; les chats connectés se mettent à jour dans la minute qui suit.
 
-### 2. Serveur (Ubuntu / Debian)
+## Serveur (optionnel)
 
-Pas de nom de domaine ? `sslip.io` en fournit un gratuit à partir de l'IP : `1.2.3.4` → `1-2-3-4.sslip.io`.
-Copie le dossier `serveur/` du projet sur le serveur, place-toi dedans, puis (en remplaçant `MON-DOMAINE`
-et `MOT-DE-PASSE`) :
+Un petit serveur Linux (un VPS suffit, ~40 Mo de RAM) avec nginx apporte :
+
+- **la page admin** `https://<serveur>/admin`, protégée par mot de passe : messages, soins, bêtises
+  (folie XXL, nuée de mouches, grand saut, chute du ciel, changement d'écran, chasse à la souris,
+  cache-cache), réglages, jauges, phrases et réponses des amis ;
+- **la distribution des mises à jour**, toujours vérifiées par leur signature.
+
+Chaque propriétaire garde la main dans les options de son chat (messages à distance, mises à jour
+automatiques, réglages à distance) et peut répondre via clic droit › « Envoyer un message… ».
+
+<details>
+<summary><b>1. Créer la clé de signature</b></summary>
+
+```bash
+python3 -c "import secrets; from tamagochat import ed25519; s = secrets.token_bytes(32); print('SIGNING_KEY   =', s.hex()); print('UPDATE_PUBKEY =', ed25519.public_key(s).hex())"
+```
+
+Conservez `SIGNING_KEY` en lieu sûr : sans elle, impossible de publier une mise à jour.
+
+> [!IMPORTANT]
+> Une clé existe déjà (`~/.minou/signing.key`, dans le secret GitHub `SIGNING_KEY`) : ne la régénérez
+> pas, les chats déjà installés ne font confiance qu'à elle.
+
+</details>
+
+<details>
+<summary><b>2. Installer le serveur (Ubuntu / Debian)</b></summary>
+
+Sans nom de domaine, [sslip.io](https://sslip.io) en fournit un à partir de l'IP : `1.2.3.4` → `1-2-3-4.sslip.io`.
+
+Copiez le dossier `serveur/` sur la machine, placez-vous dedans, puis remplacez `MON-DOMAINE` et
+`MOT-DE-PASSE` :
 
 ```bash
 sudo apt install -y python3-venv nginx certbot
 sudo useradd --system --home /opt/minou-server --shell /usr/sbin/nologin minou
 sudo mkdir -p /opt/minou-server /var/www/minou-acme
-sudo cp server.py admin.html requirements.txt ../ed25519_min.py /opt/minou-server/
+sudo cp server.py admin.html requirements.txt ../tamagochat/ed25519.py /opt/minou-server/
 sudo cp minou-server.service /etc/systemd/system/
 sed 's/TON-DOMAINE/MON-DOMAINE/g' nginx-minou.conf | sudo tee /etc/nginx/sites-available/minou > /dev/null
 
@@ -95,10 +214,10 @@ sudo venv/bin/pip install -r requirements.txt
 sudo chown -R minou:minou /opt/minou-server
 sudo -u minou venv/bin/python server.py set-password 'MOT-DE-PASSE'
 
-# service (n'écoute qu'en local, sur 127.0.0.1:8090)
+# service (écoute uniquement en local, sur 127.0.0.1:8090)
 sudo systemctl daemon-reload && sudo systemctl enable --now minou-server
 
-# nginx en HTTP, certificat Let's Encrypt, puis activation du HTTPS
+# nginx en HTTP, certificat Let's Encrypt, puis HTTPS
 sudo ln -s /etc/nginx/sites-available/minou /etc/nginx/sites-enabled/minou
 sudo nginx -t && sudo systemctl reload nginx
 sudo certbot certonly --webroot -w /var/www/minou-acme -d MON-DOMAINE --deploy-hook "systemctl reload nginx"
@@ -106,67 +225,48 @@ sudo sed -i 's/^#SSL#//' /etc/nginx/sites-available/minou
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-La page `https://MON-DOMAINE/admin` doit maintenant s'ouvrir. Données : `/opt/minou-server/minou.db`.
-Changer le mot de passe plus tard : relancer la commande `set-password` (déconnecte les sessions ouvertes).
+La page `https://MON-DOMAINE/admin` est alors accessible. Les données sont dans
+`/opt/minou-server/minou.db`. Relancer `set-password` change le mot de passe et déconnecte les sessions.
 
-### 3. Configuration locale (sur ton PC)
+**Mise à jour du serveur** : recopier `server.py`, `admin.html` et `../tamagochat/ed25519.py` dans
+`/opt/minou-server/` (ainsi que `nginx-minou.conf` s'il a changé), puis `sudo systemctl restart minou-server`.
 
-Copie `local_config.example.py` en `local_config.py` (ignoré par git) et remplis-le :
-adresse du serveur, `UPDATE_PUBKEY` de l'étape 1, et l'accès SSH utilisé pour publier (ex. `root@1.2.3.4`).
-Puis fabrique l'exe (voir plus haut) et donne-le à tes amis : leurs chats apparaissent dans la page admin.
+</details>
 
-### 4. Publier une nouvelle version
+<details>
+<summary><b>3. Activer la publication depuis GitHub</b></summary>
 
-Prérequis : le `.venv` avec PyInstaller (voir plus haut), [Git pour Windows](https://git-scm.com/)
-(son `ssh` / `scp` est utilisé), et un accès SSH par clé au serveur (en root, ou un utilisateur pouvant
-écrire dans `/opt/minou-server/releases` et faire `chown`).
+GitHub n'a aucun accès SSH au serveur : il envoie chaque version à `/api/release` avec un jeton dédié,
+et le serveur revérifie la signature avant de la publier.
 
-```powershell
-.\publier.ps1          # version suivante (1.0.0 -> 1.0.1)
-.\publier.ps1 1.2.0    # version précise
-```
+1. Sur le serveur, activer le déploiement (la commande affiche un jeton) :
+   ```bash
+   cd /opt/minou-server && sudo -u minou venv/bin/python server.py setup-deploy PROPRIETAIRE/DEPOT CLE_PUBLIQUE
+   ```
+2. Dans le dépôt GitHub, *Settings › Environments*, créer l'environnement `release` et limiter ses
+   *Deployment branches* à `main` (un workflow lancé depuis une autre branche n'aura pas les secrets).
+   Y ajouter les secrets, et la variable dans *Settings › Secrets and variables › Actions* :
 
-Le script change `APP_VERSION` dans `chat.pyw`, compile `dist\TamagoChat.exe`, le signe et l'envoie :
-tous les chats connectés se mettent à jour seuls en moins d'une minute.
+   | Type | Nom | Valeur |
+   |---|---|---|
+   | Secret (environnement `release`) | `SIGNING_KEY` | la clé privée (étape 1) |
+   | Secret (environnement `release`) | `SERVER_URL` | ex. `https://1-2-3-4.sslip.io` |
+   | Secret (environnement `release`) | `DEPLOY_TOKEN` | le jeton affiché ci-dessus |
+   | Variable (dépôt) | `UPDATE_PUBKEY` | la clé publique (étape 1) |
 
-### 5. Ou déployer depuis la page admin (GitHub Actions)
+3. Créer un token GitHub *fine-grained* limité au dépôt (Actions : lecture/écriture, Contents : lecture)
+   et le coller dans la fenêtre **Mises à jour** de la page admin.
 
-Si le projet est sur GitHub, le bouton **🚀** de la page admin (en haut à droite) montre les changements
-pas encore déployés et lance la publication en un clic : un PC Windows de GitHub compile l'exe, le signe et
-l'envoie au serveur (`.github/workflows/release.yml` + `ci_release.py`). GitHub n'a **aucun accès SSH** au
-serveur : il envoie l'exe à `/api/release` avec un jeton dédié, et le serveur revérifie la signature avant
-de le publier.
+> [!WARNING]
+> La clé de signature est stockée dans les secrets GitHub : protégez le compte propriétaire du dépôt
+> (double authentification), car il permet de publier une mise à jour. Protégez aussi `main`
+> (modifications par pull request validée) : quiconque peut y modifier le workflow peut utiliser la clé.
 
-Configuration (une seule fois) :
+La branche `main` peut être protégée sans exception pour GitHub Actions : la publication ne pousse
+aucun commit, seulement un tag `vX.Y.Z` et une release GitHub (avec les notes de version).
 
-1. Sur le serveur, active le déploiement ; la commande affiche un jeton :
-   `cd /opt/minou-server && sudo -u minou venv/bin/python server.py setup-deploy PROPRIETAIRE/DEPOT CLE_PUBLIQUE`
-2. Dans le dépôt GitHub (Settings > Secrets and variables > Actions) :
-   - secrets `SIGNING_KEY` (contenu de `~\.minou\signing.key`), `SERVER_URL` (ex. `https://1-2-3-4.sslip.io`)
-     et `DEPLOY_TOKEN` (le jeton de l'étape 1) ;
-   - variable `UPDATE_PUBKEY` (la clé publique).
-3. Crée un token GitHub *fine-grained* limité à ce dépôt (permissions : Actions en lecture/écriture,
-   Contents en lecture) et colle-le dans la fenêtre 🚀 de la page admin.
-
-⚠️ Avec cette option, la clé de signature est stockée dans les secrets GitHub : protège le compte
-propriétaire du dépôt (double authentification), car il permet de publier une mise à jour.
-La version publiée est décidée au déploiement (champ vide = version suivante) ; chaque version
-déployée reçoit un tag `vX.Y.Z` sur GitHub.
-
-## Fichiers
-
-| Fichier | Rôle |
-|---|---|
-| `chat.pyw` | l'application (tkinter) |
-| `sprites.py` | les dessins en pixel art |
-| `ed25519_min.py` | signatures Ed25519 en Python pur (vérification des mises à jour) |
-| `local_config.example.py` | modèle de configuration privée |
-| `publier.py`, `publier.ps1` | compilation, signature et envoi d'une nouvelle version depuis le PC |
-| `ci_release.py`, `.github/workflows/release.yml` | la même chose depuis GitHub Actions (bouton 🚀) |
-| `serveur/server.py` | serveur aiohttp + SQLite (API des chats, page admin, téléchargements) |
-| `serveur/admin.html` | la page admin |
-| `serveur/minou-server.service`, `serveur/nginx-minou.conf` | service systemd et site nginx |
+</details>
 
 ## Licence
 
-MIT, voir [LICENSE](LICENSE).
+Distribué sous licence MIT. Voir [LICENSE](LICENSE).

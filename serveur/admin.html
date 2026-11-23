@@ -654,6 +654,7 @@ async function refresh() {
     const s = await api("/admin/api/state");
     cats = s.cats; serverNow = s.now;
     $("release").textContent = s.release ? `🚀 v${s.release.version}` : "🚀 Mises à jour";
+    if (s.release_mac && s.release_mac.version !== s.release?.version) $("release").textContent += ` · Mac v${s.release_mac.version}`;
     renderCats(); renderHead();
     if (tab === "settings") renderSettings();
     if (tab === "phrases") loadPhrases();
@@ -690,7 +691,25 @@ $("from").addEventListener("input", () => { try { localStorage.setItem("minou_fr
 let deployTimer = null, deployKey = "";
 const RUN_STATE = { queued: "⏳ en file d'attente", in_progress: "🔨 compilation en cours…", waiting: "⏳ en attente", requested: "⏳ demandé", pending: "⏳ en attente" };
 const RUN_END = { success: "✅ publiée", failure: "❌ échec", cancelled: "⛔ annulée", timed_out: "❌ trop longue" };
-function nextVersion(v) { if (!v) return ""; const p = v.split("."); p[p.length - 1] = String(Number(p[p.length - 1]) + 1); return p.join("."); }
+// même règle que semantic-release (Conventional Commits) : feat! -> majeure, feat -> mineure, fix -> correctif
+function bumpOf(commits) {
+  let level = 0;
+  for (const c of commits) {
+    const m = /^(\w+)(\([^)]*\))?(!)?:/.exec(c.message);
+    if (!m) continue;
+    if (m[3] || /BREAKING CHANGE/.test(c.message)) return 3;
+    if (m[1] === "feat") level = Math.max(level, 2);
+    else if (m[1] === "fix" || m[1] === "perf") level = Math.max(level, 1);
+  }
+  return level;
+}
+function nextVersion(v, level) {
+  if (!v || !level) return "";
+  const p = v.split(".").map(Number);
+  if (level === 3) return `${p[0] + 1}.0.0`;
+  if (level === 2) return `${p[0]}.${p[1] + 1}.0`;
+  return `${p[0]}.${p[1]}.${p[2] + 1}`;
+}
 const isoAgo = (iso) => ago(Date.parse(iso) / 1000);
 async function openDeploy() {
   $("deploy").showModal(); deployKey = "";
@@ -720,6 +739,7 @@ function renderDeploy(d) {
     const upToDate = cats.filter(c => c.version === rel.version).length;
     const origin = rel.commit ? `compilée par GitHub (commit ${rel.commit.slice(0, 7)})` : "publiée depuis le PC";
     info.append(el("div", "sub", `${rel.date ? "le " + new Date(rel.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) + " · " : ""}${origin} · ${upToDate}/${cats.length} chat(s) à jour`));
+    info.append(el("div", "sub", d.release_mac ? `Mac : v${d.release_mac.version}` : "Mac : aucune version publiée"));
   } else info.append(el("div", null, "Aucune version publiée pour l'instant."));
   s1.append(info); b.append(s1);
 
@@ -732,6 +752,7 @@ function renderDeploy(d) {
 
   // changements pas encore déployés
   const s2 = el("section");
+  d.commits = d.commits.filter(c => !c.message.startsWith("chore(release)"));
   const n = d.commits.length;
   s2.append(el("h3", null, d.base_known ? (n ? `${n} changement${n > 1 ? "s" : ""} pas encore déployé${n > 1 ? "s" : ""}` : "Changements") : "Derniers changements sur GitHub"));
   if (!d.base_known) s2.append(el("div", "muted", "La version publiée ne vient pas de GitHub : impossible de savoir lesquels elle contient déjà."));
@@ -750,18 +771,21 @@ function renderDeploy(d) {
   const running = d.runs.some(r => r.status !== "completed");
   const s3 = el("section"); s3.append(el("h3", null, "Déployer"));
   const f = el("form", "deploy-form");
-  const vi = el("input"); vi.placeholder = rel ? `${nextVersion(rel.version)} (auto)` : "1.0.0"; vi.maxLength = 20;
-  const go = el("button", "btn", running ? "Déploiement en cours…" : "🚀 Compiler et déployer"); go.disabled = running;
-  f.append(vi, go);
+  const next = d.base_known ? nextVersion(rel?.version, bumpOf(d.commits)) : "";
+  const nothing = d.base_known && !next;
+  const go = el("button", "btn", running ? "Déploiement en cours…" : next ? `🚀 Publier la v${next}` : "🚀 Compiler et déployer");
+  go.disabled = running || nothing;
+  f.append(go);
   f.onsubmit = async (e) => {
     e.preventDefault();
-    const v = vi.value.trim();
-    if (!confirm(`Compiler le code de GitHub et l'envoyer à tous les chats en version ${v || nextVersion(rel?.version) || "suivante"} ?`)) return;
+    if (!confirm(`Compiler le code de GitHub (Windows et Mac) et l'envoyer à tous les chats${next ? " en version " + next : ""} ?`)) return;
     go.disabled = true; go.textContent = "Lancement…";
-    try { await api("/admin/api/deploy", { version: v }); toast("C'est parti ! Compilation sur GitHub (~3 min)…"); setTimeout(() => loadDeploy(true), 2500); }
+    try { await api("/admin/api/deploy", {}); toast("C'est parti ! Compilation sur GitHub (~5 min)…"); setTimeout(() => loadDeploy(true), 2500); }
     catch (err) { if (err.message !== "auth") toast("Erreur : " + err.message); go.disabled = false; go.textContent = "🚀 Compiler et déployer"; }
   };
-  s3.append(f, el("div", "muted", "GitHub compile l'exe (~3 min), le signe et l'envoie au serveur ; les chats se mettent à jour dans la minute qui suit."));
+  s3.append(f, el("div", "muted", nothing
+    ? "Rien à publier : aucun commit « fix: » ou « feat: » depuis la dernière version (les « chore: », « docs: »… ne changent pas la version)."
+    : "Le numéro de version est calculé d'après les messages de commit (fix: → correctif, feat: → nouveauté). GitHub compile l'app Windows et Mac (~5 min), les signe, crée la release et les envoie au serveur ; les chats se mettent à jour dans la minute qui suit."));
   b.append(s3);
 
   // historique
