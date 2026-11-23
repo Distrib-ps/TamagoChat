@@ -11,11 +11,13 @@
 #              (un échec de la version Mac n'empêche pas de publier Windows)
 # 3. sign    : signe les fichiers ; seule étape qui voit SIGNING_KEY, et elle n'installe rien
 # 4. release : envoie au serveur (/api/release, qui revérifie la signature ; GitHub n'a aucun
-#              accès SSH), puis semantic-release crée le tag et la release GitHub
-#              (avec les notes de version). Aucun commit n'est poussé sur main.
+#              accès SSH), puis semantic-release crée le tag, le CHANGELOG (commit du numéro de version
+#              sur main) et la release GitHub
 #
 # Les secrets (SIGNING_KEY, DEPLOY_TOKEN, SERVER_URL) sont dans l'environnement GitHub « release »,
 # réservé à la branche main : un workflow lancé depuis une autre branche n'y a pas accès.
+# semantic-release pousse son commit sur main (protégée) avec la clé de déploiement RELEASE_DEPLOY_KEY,
+# seule autorisée à contourner la protection, et rangée dans ce même environnement.
 # Variable du dépôt : UPDATE_PUBKEY (voir README).
 name: Publier une version
 run-name: Publier la version suivante
@@ -24,7 +26,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # tag et release GitHub
+  contents: write   # release GitHub
 
 concurrency:
   group: release
@@ -191,6 +193,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}   # pour pousser le commit de version sur main
       - uses: actions/download-artifact@v4
         with:
           name: signed
@@ -219,7 +222,7 @@ jobs:
           node-version: 26
           cache: npm
       - run: npm ci
-      - name: Tag et release GitHub (notes de version)
+      - name: Tag, CHANGELOG et release GitHub
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
