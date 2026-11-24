@@ -52,6 +52,15 @@ def make_tool_window(widget):
     pass                           # l'app n'a pas d'icône dans le Dock (LSUIElement)
 
 
+def keep_on_top(widgets):
+    """Réapplique le niveau « premier plan » (Tk) aux fenêtres du chat."""
+    for w in widgets:
+        try:
+            w.attributes("-topmost", True)
+        except Exception:
+            pass
+
+
 def set_dpi_aware():
     pass
 

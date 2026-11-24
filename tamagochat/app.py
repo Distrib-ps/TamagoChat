@@ -40,6 +40,7 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
         self.dpi = desktop.dpi_scale(r)
         self.runs = {}                       # segments de pixels par sprite (voir render.py)
         self.chase_spin = 0                  # durée de la course après sa queue (reactions.py)
+        self.menu_open = False
         self.scene, self.last_scene = [], None
 
         self.canvas = tk.Canvas(r, bg=desktop.BG, highlightthickness=0, bd=0, cursor="hand2")
@@ -192,6 +193,20 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
     def move_window(self):
         self.root.geometry(f"+{int(self.x)}+{int(self.y)}")
 
+    def keep_on_top(self):
+        """Le chat, ses mouches, sa bulle puis ses fenêtres ouvertes, dans cet ordre (la bulle
+        passe devant le chat). Pas pendant que le menu du clic droit est ouvert."""
+        if self.menu_open:
+            return
+        wins = [self.root] if self.data["topmost"] else []
+        wins += [f.win for f in self.flies if f.state != "dead"]
+        if self.bubble.visible:
+            wins.append(self.bubble.win)
+        for w in (self.stats_win, self.phrases_win, self.reply_win):
+            if w is not None and w.winfo_exists():
+                wins.append(w)
+        desktop.keep_on_top(wins)
+
     def head_screen_pos(self):
         if self.state == "sleep":
             col, row = 12, 6
@@ -234,6 +249,8 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
             f.update()
         if self.t % 20 == 0:
             self.remote.snapshot = self.remote_snapshot()
+        if self.t % 40 == 0:
+            self.keep_on_top()
         try:
             while True:
                 self.handle_remote(*self.remote.inbox.get_nowait())

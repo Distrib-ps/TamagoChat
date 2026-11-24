@@ -50,6 +50,8 @@ class Bubble:
         self.tail_x = None
         self.geom = None
         self.follow()
+        if not self.app.menu_open:
+            desktop.keep_on_top([self.win])   # une nouvelle bulle passe devant tout
 
     def hide(self):
         self.visible = False
