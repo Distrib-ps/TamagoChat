@@ -75,6 +75,26 @@ def make_tool_window(widget):
         pass
 
 
+HWND_TOPMOST = -1
+SWP_KEEP_ON_TOP = 0x0001 | 0x0002 | 0x0010 | 0x0200   # NOSIZE | NOMOVE | NOACTIVATE | NOOWNERZORDER
+user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
+                                ctypes.c_int, ctypes.c_int, wintypes.UINT]
+user32.SetWindowPos.restype = wintypes.BOOL
+
+
+def keep_on_top(widgets):
+    """Remet les fenêtres tout en haut des fenêtres « toujours au premier plan », sans prendre le
+    focus : une autre appli de ce type (vidéo incrustée, appel, Gestionnaire des tâches...) ouverte
+    après coup passerait sinon devant le chat et sa bulle, pour de bon."""
+    for w in widgets:
+        try:
+            hwnd = user32.GetParent(w.winfo_id())
+            if hwnd:
+                user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_KEEP_ON_TOP)
+        except Exception:
+            pass
+
+
 def set_dpi_aware():
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)

@@ -105,10 +105,12 @@ class MenuMixin:
         m.add_cascade(label="Options", menu=opts)
         m.add_separator()
         m.add_command(label="Quitter", command=self.quit)
+        self.menu_open = True             # pas de remise au premier plan par-dessus le menu
         try:
             m.tk_popup(e.x_root, e.y_root)
         finally:
             m.grab_release()
+            self.menu_open = False
 
     def set_opt(self, key, value):
         self.data[key] = value
