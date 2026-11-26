@@ -61,8 +61,10 @@ class TestReactions(unittest.TestCase):
         for kind in REACTIONS + ("dizzy",):                  # chaque réaction a ses phrases
             self.assertTrue(PHRASES[kind])
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        server = open(os.path.join(root, "serveur", "server.py"), encoding="utf-8").read()
-        admin = open(os.path.join(root, "serveur", "admin.html"), encoding="utf-8").read()
+        with open(os.path.join(root, "server", "tamagochat_server", "settings.py"), encoding="utf-8") as f:
+            server = f.read()
+        with open(os.path.join(root, "web", "src", "constants.js"), encoding="utf-8") as f:
+            admin = f.read()
         for kind in REACTIONS:                               # action à distance acceptée et affichée
             self.assertIn(f'"{kind}"', server)
             self.assertIn(f'["{kind}"', admin)

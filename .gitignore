@@ -10,10 +10,12 @@ release/
 node_modules/
 .next-version
 # secrets / données du serveur : ne jamais publier
+.env
 *.key
 local_config.py
-serveur/config.json
-serveur/*.db*
-serveur/releases/
+server/config.json
+server/*.db*
+server/releases/
+server/.dev/
 # macOS
 .DS_Store
