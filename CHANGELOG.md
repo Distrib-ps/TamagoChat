@@ -1,3 +1,9 @@
+## [1.4.0](https://github.com/Distrib-ps/TamagoChat/compare/v1.3.2...v1.4.0) (2026-11-26)
+
+### Features
+
+* nouveau style du menu du clic droit ([#9](https://github.com/Distrib-ps/TamagoChat/issues/9)) ([216152d](https://github.com/Distrib-ps/TamagoChat/commit/216152de3860beeb9b7aeab4fef05ccb7a54e63c))
+
 ## [1.3.2](https://github.com/Distrib-ps/TamagoChat/compare/v1.3.1...v1.3.2) (2026-11-26)
 
 ### Performance Improvements
