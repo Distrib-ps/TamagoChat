@@ -123,7 +123,9 @@ tamagochat/
 ├── reactions.py         toilette, étirement, atchoum, course après sa queue
 ├── render.py            dessin en pixel art (sprites.py)
 ├── bubble.py            bulle de dialogue
-├── menu.py, dialogs.py  menu du clic droit et fenêtres annexes
+├── menu.py              contenu du menu du clic droit
+├── popup_menu.py        dessin du menu (theme.py : couleurs et tailles, icons.py : icônes)
+├── dialogs.py           fenêtres annexes
 ├── remote.py            lien avec le serveur et mises à jour signées
 ├── config.py            réglages, chemins
 ├── phrases.py           phrases par situation
