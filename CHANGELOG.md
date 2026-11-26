@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/Distrib-ps/TamagoChat/compare/v1.4.1...v1.5.0) (2026-11-26)
+
+### Features
+
+* il louche sur une coccinelle posée sur son nez ([#12](https://github.com/Distrib-ps/TamagoChat/issues/12)) ([38a6f97](https://github.com/Distrib-ps/TamagoChat/commit/38a6f97c6b9f1fbf4f9e57423dccfc24b5697cf5))
+
 ## [1.4.1](https://github.com/Distrib-ps/TamagoChat/compare/v1.4.0...v1.4.1) (2026-11-26)
 
 ### Bug Fixes
