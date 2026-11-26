@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" alt="Logo TamagoChat : Minou, le chat en pixel art" width="140">
+<img src="docs/images/logo.gif" alt="Logo TamagoChat : Minou, le chat en pixel art, se promène de gauche à droite" width="400">
 
 # TamagoChat
 
