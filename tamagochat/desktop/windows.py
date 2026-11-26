@@ -88,6 +88,10 @@ def keep_on_top(widgets):
     après coup passerait sinon devant le chat et sa bulle, pour de bon."""
     for w in widgets:
         try:
+            # D'abord appliquer les déplacements que Tk n'a pas encore faits : sinon Windows répond
+            # avec l'ancienne position, que Tk adopte en annulant le déplacement (la bulle d'un
+            # message pouvait ainsi rester hors de l'écran).
+            w.update_idletasks()
             hwnd = user32.GetParent(w.winfo_id())
             if hwnd:
                 user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_KEEP_ON_TOP)
