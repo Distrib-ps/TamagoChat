@@ -3,14 +3,18 @@ import { ICONS, PALETTE } from "../lib/icons.js";
 export const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 const runsCache = {};
-// Le contour (K) suit la couleur du texte : brun en clair, crème en sombre.
+// Icônes au corps blanc (enveloppe, bulle) : leur contour reste brun, comme un autocollant, sinon
+// en sombre le contour crème se confond avec le blanc et l'icône devient un rectangle.
+const PAPER_ICONS = new Set(["message", "phrases"]);
+// Le contour (K) des autres icônes suit la couleur du texte : brun en clair, crème en sombre.
 function iconRuns(name) {
+  const outline = PAPER_ICONS.has(name) ? "var(--color-line)" : "currentColor";
   return (runsCache[name] ||= ICONS[name].flatMap((row, y) => {
     const runs = [];
     for (let x = 0; x < row.length;) {
       let end = x;
       while (end < row.length && row[end] === row[x]) end++;
-      if (row[x] !== ".") runs.push([x, y, end - x, row[x] === "K" ? "currentColor" : PALETTE[row[x]]]);
+      if (row[x] !== ".") runs.push([x, y, end - x, row[x] === "K" ? outline : PALETTE[row[x]]]);
       x = end;
     }
     return runs;

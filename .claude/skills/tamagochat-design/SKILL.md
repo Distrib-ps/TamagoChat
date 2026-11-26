@@ -49,6 +49,9 @@ Les couleurs des jauges sont fixes : satiété `#e8a23c`, hydratation `#4fa3e0`,
 - **Icônes** : uniquement les icônes en pixel art de `src/lib/icons.js` (composant `PixelIcon`),
   jamais d'emojis. Une icône manquante se dessine dans la grille 9 x 9 avec la palette des sprites ;
   celles du menu de l'app doivent rester identiques à `tamagochat/icons.py` (vérifié par les tests).
+  Le contour d'une icône suit la couleur du texte (crème en sombre), sauf pour les icônes au corps
+  blanc (enveloppe, bulle : `PAPER_ICONS` dans `components/ui.jsx`) qui gardent leur contour brun,
+  sinon elles deviennent un rectangle blanc en sombre.
 - **Mouvement** : seulement en réponse à ce que fait la personne ou à ce qui arrive, jamais en boucle.
   Les animations sont des jetons de `app.css` : `animate-hop` (le chat saute quand on le sélectionne,
   l'icône d'une action bondit quand elle est envoyée), `animate-pop` (nouveau message, fenêtre qui
