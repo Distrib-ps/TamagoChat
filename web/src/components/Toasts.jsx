@@ -13,5 +13,13 @@ export function Toasts() {
       setTimeout(() => setItems((list) => list.filter((t) => t.id !== id)), 2600);
     };
   }, []);
-  return items.map((t) => <div class="toast" key={t.id}>{t.msg}</div>);
+  return (
+    <div class="pointer-events-none fixed inset-x-0 bottom-5 z-20 flex flex-col items-center gap-2 px-4" role="status">
+      {items.map((t) => (
+        <div key={t.id} class="animate-rise rounded-chip border-2 border-line bg-ink px-4 py-2 text-sm font-bold text-paper shadow-sticker-sm">
+          {t.msg}
+        </div>
+      ))}
+    </div>
+  );
 }

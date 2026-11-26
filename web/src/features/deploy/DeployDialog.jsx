@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
+import { Dialog } from "../../components/Dialog.jsx";
 import { Note } from "../../components/Note.jsx";
+import { LinkButton } from "../../components/ui.jsx";
 import { AuthError, api } from "../../lib/api.js";
 import { usePolling } from "../../lib/hooks.js";
 import { PublishPanel } from "./PublishPanel.jsx";
@@ -16,14 +18,14 @@ function DeployBody({ cats, now }) {
   const first = useRef(true);           // la première fois, sans le cache du serveur
   usePolling(() => { load(first.current); first.current = false; }, 5000);
 
-  if (error) return <Note icon="⚠️" warn>Erreur : {error}</Note>;
-  if (!d) return <div class="muted">Chargement…</div>;
+  if (error) return <Note icon="quit" warn>Erreur : {error}</Note>;
+  if (!d) return <p class="text-ink-soft">Chargement…</p>;
   const reload = () => load(true);
 
   let body;
   if (!d.has_deploy) {
     body = (
-      <Note icon="🔧">
+      <Note icon="options">
         Le déploiement depuis GitHub n'est pas encore configuré sur le serveur (commande « setup-deploy », voir le README).
       </Note>
     );
@@ -33,7 +35,7 @@ function DeployBody({ cats, now }) {
     body = (
       <>
         <PublishPanel d={d} now={now} reload={reload} />
-        <button class="linkbtn" onClick={() => setChangeToken(true)}>Changer le token GitHub</button>
+        <LinkButton class="justify-self-start" onClick={() => setChangeToken(true)}>Changer le token GitHub</LinkButton>
       </>
     );
   }
@@ -45,20 +47,10 @@ function DeployBody({ cats, now }) {
   );
 }
 
-export function DeployDialog({ open, onClose, cats, now }) {
-  const [dialog, setDialog] = useState(null);
-  useEffect(() => {
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open, dialog]);
-  return (
-    <dialog class="deploy" ref={setDialog} onClose={onClose}>
-      <div class="dlg-head">
-        <h2>🚀 Mises à jour</h2>
-        <button class="ib" title="Fermer" onClick={onClose}>✖️</button>
-      </div>
-      <div class="dlg-body">{open && <DeployBody cats={cats} now={now} />}</div>
-    </dialog>
-  );
-}
+export const DeployDialog = ({ open, onClose, cats, now }) => (
+  <Dialog open={open} onClose={onClose} title="Mises à jour" icon="jump">
+    <div class="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto p-4 sm:p-5">
+      <DeployBody cats={cats} now={now} />
+    </div>
+  </Dialog>
+);

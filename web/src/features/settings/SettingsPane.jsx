@@ -18,9 +18,9 @@ export function SettingsPane({ cat, store, send }) {
   const disabled = cat.allow_settings === false;
 
   return (
-    <section class="pane">
+    <section class="grid min-h-0 flex-1 animate-fade grid-cols-[minmax(0,1fr)] content-start gap-4 overflow-y-auto bg-paper-2 p-3 md:gap-5 md:p-5">
       <RemoteStatusNote cat={cat} />
-      <div class="cards">
+      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 md:gap-5 xl:grid-cols-2">
         <NameCard name={value("name")} pending={pending.name} disabled={disabled} onRename={(v) => set({ name: v })} />
         <GaugesCard cat={cat} store={store} send={send} disabled={disabled} />
         <BehaviorCard value={value} pending={pending} set={set} disabled={disabled} />

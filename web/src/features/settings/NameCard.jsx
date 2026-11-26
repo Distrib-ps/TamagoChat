@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { Button, Panel, PanelTitle, control, cx } from "../../components/ui.jsx";
 import { PendingMark } from "./controls.jsx";
 
 export function NameCard({ name, pending, onRename, disabled }) {
@@ -11,17 +12,16 @@ export function NameCard({ name, pending, onRename, disabled }) {
     input.current.blur();
   };
   return (
-    <div class="card">
-      <h3>🏷️ Nom du chat</h3>
-      <div class="body">
-        <div class="namebox">
-          <input ref={input} type="text" maxlength={24} placeholder="Nouveau nom" value={draft} disabled={disabled}
-                 onInput={(e) => setDraft(e.currentTarget.value)} onKeyDown={(e) => { if (e.key === "Enter") rename(); }} />
-          <button class="btn small" onClick={rename} disabled={disabled}>Renommer</button>
-          <PendingMark p={pending} />
-        </div>
-        <div class="hint">Il annoncera lui-même son nouveau nom.</div>
+    <Panel class="grid content-start gap-3.5 p-4 md:p-5">
+      <PanelTitle icon="rename">Nom du chat</PanelTitle>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <input ref={input} type="text" maxlength={24} placeholder="Nouveau nom" aria-label="Nom du chat" value={draft}
+               disabled={disabled} class={cx(control, "min-w-0 flex-1")}
+               onInput={(e) => setDraft(e.currentTarget.value)} onKeyDown={(e) => { if (e.key === "Enter") rename(); }} />
+        <Button variant="primary" size="sm" onClick={rename} disabled={disabled}>Renommer</Button>
+        <PendingMark p={pending} />
       </div>
-    </div>
+      <p class="text-sm text-ink-soft">Il annoncera lui-même son nouveau nom.</p>
+    </Panel>
   );
 }

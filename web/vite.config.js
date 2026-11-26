@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import preact from "@preact/preset-vite";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv } from "vite";
 
 const SERVER = fileURLToPath(new URL("../server/server.py", import.meta.url));
@@ -27,7 +28,7 @@ export default defineConfig(({ command, mode }) => {
   const api = `http://127.0.0.1:${apiPort}`;
   return {
     base: command === "build" ? "/admin/static/" : "/",
-    plugins: [preact(), startApi(api, apiPort)],
+    plugins: [preact(), tailwindcss(), startApi(api, apiPort)],
     server: { port: Number(env.WEB_PORT || 5173), open: true, proxy: { "/admin/api": api } },
     build: { outDir: "dist", emptyOutDir: true },
   };

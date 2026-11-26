@@ -77,6 +77,16 @@ class TestMenuIcons(unittest.TestCase):
             self.assertEqual((len(rows), {len(r) for r in rows}), (SIZE, {SIZE}), name)
             self.assertTrue(set("".join(rows)) <= set(sprites.PALETTE) | {"."}, name)
 
+    def test_web_uses_the_same_icons(self):
+        from tamagochat.icons import ICONS
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, "web", "src", "lib", "icons.js"), encoding="utf-8") as f:
+            web = f.read()
+        for name, rows in ICONS.items():
+            self.assertIn(f"  {name}: [\n" + "".join(f'    "{r}",\n' for r in rows), web, name)
+        for key, color in sprites.PALETTE.items():
+            self.assertIn(f'  {key}: "{color}",', web)
+
 
 class TestPhrases(unittest.TestCase):
     def test_every_category_has_phrases(self):

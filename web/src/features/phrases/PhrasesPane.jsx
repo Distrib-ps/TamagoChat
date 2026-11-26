@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { Note } from "../../components/Note.jsx";
+import { Button, Panel, control, cx } from "../../components/ui.jsx";
 import { toast } from "../../components/Toasts.jsx";
 import { phraseLabels } from "../../constants.js";
 import { api, quiet } from "../../lib/api.js";
@@ -38,9 +39,9 @@ export function PhrasesPane({ cat, send }) {
   if (!cat.settings) return <OldVersionNote cat={cat} />;
   if (!data) {
     return (
-      <section class="pane">
+      <section class="grid min-h-0 flex-1 animate-fade grid-cols-[minmax(0,1fr)] content-start gap-4 bg-paper-2 p-3 md:p-5">
         <RemoteStatusNote cat={cat} />
-        <Note icon="⏳">{cat.name} n'a pas encore envoyé ses phrases : elles arrivent dès qu'il est en ligne.</Note>
+        <Note icon="sleep">{cat.name} n'a pas encore envoyé ses phrases : elles arrivent dès qu'il est en ligne.</Note>
       </section>
     );
   }
@@ -71,39 +72,46 @@ export function PhrasesPane({ cat, send }) {
     setAdded("");
   };
 
-  let info = `${plural(list.length, "phrase")} · ${custom ? "personnalisées ★" : "d'origine"}`;
-  if (loc) info += Date.now() - loc.t > LATE_MS ? " · ⚠️ pas encore appliqué" : " · ⏳ envoi au chat…";
+  const status = loc && (Date.now() - loc.t > LATE_MS ? "pas encore appliqué" : "envoi au chat…");
 
   return (
-    <section class="pane">
+    <section class="grid min-h-0 flex-1 animate-fade grid-cols-[minmax(0,1fr)] content-start gap-4 overflow-y-auto bg-paper-2 p-3 md:p-5">
       <RemoteStatusNote cat={cat} />
-      <div class="ph-top">
-        <select value={cur} disabled={off} onChange={(e) => { setKey(e.currentTarget.value); setEditing(-1); }}>
-          {data.cats.map(([k, label]) => (
-            <option value={k}>{data.custom.includes(k) ? "★ " : ""}{label} ({listOf(k).length})</option>
-          ))}
-        </select>
-        <span class="ph-info">{info}</span>
-        {(custom || loc?.reset) && (
-          <button class="btn small ghost" disabled={off} onClick={reset}>↺ Rétablir l'origine</button>
-        )}
-      </div>
-      <ul class={"ph-list" + (loc?.reset ? " stale" : "")}>
-        {!list.length && <li class="empty">Aucune phrase : il ne dira rien dans cette situation.</li>}
+      <Panel class="grid gap-3 p-3 sm:p-4">
+        <label class="grid gap-1.5">
+          <span class="font-pixel">Situation</span>
+          <select value={cur} disabled={off} class={cx(control, "w-full py-1.5")}
+                  onChange={(e) => { setKey(e.currentTarget.value); setEditing(-1); }}>
+            {data.cats.map(([k, label]) => (
+              <option value={k}>{label} ({listOf(k).length}){data.custom.includes(k) ? ", personnalisées" : ""}</option>
+            ))}
+          </select>
+        </label>
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <span class="text-sm text-ink-soft">
+            {plural(list.length, "phrase")} {custom ? (list.length > 1 ? "personnalisées" : "personnalisée") : "d'origine"}{status && `, ${status}`}
+          </span>
+          {(custom || loc?.reset) && <Button size="sm" disabled={off} onClick={reset}>Rétablir l'origine</Button>}
+        </div>
+      </Panel>
+      <Panel as="ul" class={cx("py-1", loc?.reset && "opacity-50")}>
+        {!list.length && <li class="px-3 py-2 text-ink-soft">Aucune phrase : il ne dira rien dans cette situation.</li>}
         {list.map((text, i) => (
           <PhraseRow key={cur + i + text} text={text} disabled={off}
             editing={editing === i} setEditing={(on) => setEditing(on ? i : -1)}
-            onSay={() => send({ kind: "say", text }).then((ok) => ok && toast("Envoyé !"))}
+            onSay={() => send({ kind: "say", text }).then((ok) => ok && toast("Envoyé"))}
             onSave={(v) => setList(list.map((x, j) => (j === i ? v : x)))}
             onDelete={() => setList(list.filter((_, j) => j !== i))} />
         ))}
-      </ul>
-      <form class="ph-add" onSubmit={add}>
-        <input maxlength={200} placeholder="Nouvelle phrase… (écris {name} pour son nom)" disabled={off}
-               value={added} onInput={(e) => setAdded(e.currentTarget.value)} />
-        <button class="btn small" disabled={off}>Ajouter</button>
+      </Panel>
+      <form onSubmit={add} class="flex gap-2">
+        <input maxlength={200} placeholder="Nouvelle phrase" disabled={off} aria-label="Nouvelle phrase"
+               class={cx(control, "min-w-0 flex-1")} value={added} onInput={(e) => setAdded(e.currentTarget.value)} />
+        <Button variant="primary" type="submit" disabled={off}>Ajouter</Button>
       </form>
-      <div class="hint">Chaque modification est envoyée au chat tout de suite. 💬 = la lui faire dire maintenant.</div>
+      <p class="text-sm text-ink-soft">
+        Écris {"{name}"} pour glisser son nom dans une phrase. Chaque modification est envoyée au chat tout de suite.
+      </p>
     </section>
   );
 }
