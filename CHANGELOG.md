@@ -1,3 +1,9 @@
+## [1.4.1](https://github.com/Distrib-ps/TamagoChat/compare/v1.4.0...v1.4.1) (2026-11-26)
+
+### Bug Fixes
+
+* les messages reçus s'affichent de nouveau dans la bulle ([#10](https://github.com/Distrib-ps/TamagoChat/issues/10)) ([b2e9955](https://github.com/Distrib-ps/TamagoChat/commit/b2e9955ceb6458b244d10455e09984f4900616fc)), references [#4](https://github.com/Distrib-ps/TamagoChat/issues/4)
+
 ## [1.4.0](https://github.com/Distrib-ps/TamagoChat/compare/v1.3.2...v1.4.0) (2026-11-26)
 
 ### Features
