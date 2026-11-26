@@ -7,7 +7,7 @@ export const ACTION_GROUPS = [
                ["drop", "Tomber du ciel", "comet"], ["screen", "Changer d'écran", "screen"],
                ["mouse", "Chasser la souris", "mouse"], ["hide", "Cache-cache", "box"]]],
   ["Réactions", [["groom", "Toilette", "tongue"], ["stretch", "Étirement", "star"], ["sneeze", "Atchoum", "sneeze"],
-                 ["chase_tail", "Courir après sa queue", "spiral"]]],
+                 ["chase_tail", "Courir après sa queue", "spiral"], ["cross_eyed", "Loucher", "eyes"]]],
 ];
 export const ACTION_LABEL = Object.fromEntries(ACTION_GROUPS.flatMap((g) => g[1].map(([k, label]) => [k, label])));
 export const ACTION_ICON = Object.fromEntries(ACTION_GROUPS.flatMap((g) => g[1].map(([k, , icon]) => [k, icon])));
@@ -17,6 +17,7 @@ export const STATES = {
   play: "joue à la pelote", pet: "se fait câliner", crazy: "fait une crise de folie !",
   hunt: "chasse une mouche", drag: "est porté", fall: "tombe", hidden: "joue à cache-cache",
   groom: "fait sa toilette", stretch: "s'étire", sneeze: "éternue", chase_tail: "court après sa queue",
+  cross_eyed: "louche sur une coccinelle",
 };
 
 export const STATS = [["satiete", "Satiété"], ["hydratation", "Hydratation"], ["bonheur", "Bonheur"], ["energie", "Énergie"]];

@@ -128,6 +128,8 @@ class RenderMixin:
         else:
             (key, build), lift = self.cat_sprite(), 0
         self.blit(key, build, SIDE, TOP - lift)
+        for key, build, ux, uy in self.reaction_extras():
+            self.blit(key, build, ux, uy)
         if st == "play" and self.yarn:
             ux = (self.yarn["x"] - self.x) / self.S - 4
             uy = CH - 7 - self.yarn["h"] / self.S

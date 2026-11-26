@@ -40,6 +40,7 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
         self.dpi = desktop.dpi_scale(r)
         self.runs = {}                       # segments de pixels par sprite (voir render.py)
         self.chase_spin = 0                  # durée de la course après sa queue (reactions.py)
+        self.ladybug = None                  # coccinelle sur laquelle il louche (reactions.py)
         self.menu, self.menu_open = None, False
         self.scene, self.last_scene = [], None
 
