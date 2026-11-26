@@ -1,7 +1,7 @@
 # Page admin TamagoChat (front)
 
-Application [Preact](https://preactjs.com) compilée avec [Vite](https://vite.dev), qui ne fait
-qu'appeler l'API du serveur (`server/`). Une fois compilée (`web/dist`), elle est servie par le
+Application [Preact](https://preactjs.com) stylée avec [Tailwind CSS](https://tailwindcss.com) et
+compilée avec [Vite](https://vite.dev), qui ne fait qu'appeler l'API du serveur (`server/`). Une fois compilée (`web/dist`), elle est servie par le
 serveur à la même adresse que l'API : `/admin`, fichiers sous `/admin/static/`.
 
 ## Développer
@@ -45,11 +45,19 @@ web/
     │   ├── settings/         nom, jauges, comportement
     │   ├── phrases/          phrases du chat
     │   └── deploy/           fenêtre « Mises à jour »
-    ├── components/           composants partagés : Note, Toasts
-    ├── lib/                  api (appels au serveur), format, hooks, assets (chemins de public/)
-    ├── constants.js          libellés des actions, états, jauges, réglages
-    └── styles/               app.css importe theme, base, login, layout, chat, settings, phrases, deploy
+    ├── components/           ui.jsx (Button, Panel, PixelIcon…), Note, Toasts
+    ├── lib/                  api (appels au serveur), format, hooks, assets, icons (pixel art du chat)
+    ├── constants.js          libellés et icônes des actions, états, jauges, réglages
+    └── styles/app.css        Tailwind, polices et jetons du style (couleurs, ombres, arrondis)
 ```
+
+## Style
+
+L'identité « Sticker pixel » (couleurs, polices, règles d'écriture, ce qu'on s'interdit) est décrite
+dans le skill Claude Code du projet : `.claude/skills/tamagochat-design/SKILL.md`. En résumé, les
+classes Tailwind vont dans le JSX, les couleurs viennent uniquement des jetons de `app.css`, et ce qui
+se répète passe par `components/ui.jsx`. Les icônes du menu du chat sont recopiées de
+`tamagochat/icons.py` (un test vérifie qu'elles restent identiques).
 
 ## API utilisée
 

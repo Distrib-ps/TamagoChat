@@ -1,4 +1,4 @@
-import { ACTION_LABEL, SET_LABEL, STAT_LABEL, phraseLabels } from "../constants.js";
+import { ACTION_ICON, ACTION_LABEL, SET_LABEL, STAT_LABEL, phraseLabels } from "../constants.js";
 
 export function ago(ts, now) {
   if (!ts) return "jamais";
@@ -25,14 +25,21 @@ export function describeSetting(k, v) {
 }
 
 export function describeItem(it) {
-  if (it.kind === "action") return ACTION_LABEL[it.action] || it.action;
-  if (it.kind === "settings") return "⚙️ " + Object.entries(it.settings || {}).map(([k, v]) => describeSetting(k, v)).join(" · ");
-  if (it.kind === "stats") return "📊 Jauges → " + Object.entries(it.stats || {}).map(([k, v]) => `${STAT_LABEL[k] || k} ${v}`).join(" · ");
+  if (it.kind === "action") return { icon: ACTION_ICON[it.action] || "star", text: ACTION_LABEL[it.action] || it.action };
+  if (it.kind === "settings") {
+    const list = Object.entries(it.settings || {}).map(([k, v]) => describeSetting(k, v));
+    return { icon: "options", text: "Réglages : " + list.join(", ") };
+  }
+  if (it.kind === "stats") {
+    const list = Object.entries(it.stats || {}).map(([k, v]) => `${STAT_LABEL[k] || k} ${v}`);
+    return { icon: "stats", text: "Jauges : " + list.join(", ") };
+  }
   if (it.kind === "phrases") {
     const label = phraseLabels[it.key] || it.key;
-    return `🗨️ Phrases « ${label} » : ` + (it.reset ? "remises d'origine" : `${(it.list || []).length} phrase(s)`);
+    const what = it.reset ? "remises d'origine" : plural((it.list || []).length, "phrase");
+    return { icon: "phrases", text: `Phrases « ${label} » : ${what}` };
   }
-  return it.kind;
+  return { icon: "star", text: it.kind };
 }
 
 // même règle que semantic-release (Conventional Commits) : feat! -> majeure, feat -> mineure, fix -> correctif
