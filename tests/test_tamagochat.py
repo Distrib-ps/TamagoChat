@@ -47,13 +47,18 @@ class TestSprites(unittest.TestCase):
 
 class TestReactions(unittest.TestCase):
     def test_sprites(self):
-        for rows in (sprites.make_yawn(), sprites.make_groom(0), sprites.make_groom(1)):
+        for rows in (sprites.make_yawn(), sprites.make_groom(0), sprites.make_groom(1),
+                     *(sprites.make_cross_eyed(look, mouth) for look in ("center", "in", "down")
+                       for mouth in ("normal", "open"))):
             self.assertEqual((len(rows[0]), len(rows)), (31, 24))
         for extra in range(0, 7):
             rows = sprites.make_stretch(extra, yawn=extra == 6)
             self.assertEqual(len(rows), 24 + extra)          # plus haut, même largeur
             self.assertEqual({len(r) for r in rows}, {31})
         self.assertEqual(sprites.make_stretch(0), sprites.make_sit("closed", "normal", "up"))
+        for bug in (sprites.LADYBUG, sprites.LADYBUG_FLY):                 # coccinelle : 7 x 8
+            self.assertEqual((len(bug), {len(r) for r in bug}), (8, {7}))
+            self.assertTrue(set("".join(bug)) <= set(sprites.PALETTE) | {"."})
 
     def test_reactions_known_everywhere(self):
         from tamagochat.reactions import REACTION_LABELS, REACTIONS

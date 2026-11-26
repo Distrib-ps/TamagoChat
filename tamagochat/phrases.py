@@ -39,6 +39,8 @@ PHRASE_CATEGORIES = [
     ("sneeze", "Quand il éternue"),
     ("chase_tail", "Quand il court après sa queue"),
     ("dizzy", "Après avoir couru après sa queue"),
+    ("cross_eyed", "Quand il louche sur une coccinelle"),
+    ("cross_eyed_end", "Quand la coccinelle s'envole"),
 ]
 
 PHRASES = {
@@ -113,6 +115,10 @@ PHRASES = {
                    "Elle est à moi !"],
     "dizzy": ["La tête qui tourne...", "Tout tourne autour de moi...", "Ouh là... je vois double.",
               "Je l'ai presque eue !"],
+    "cross_eyed": ["Euh... t'es qui, toi ?", "Y'a un truc sur mon nez...", "*louche*",
+                   "Bouge pas... bouge pas...", "Coucou la coccinelle !"],
+    "cross_eyed_end": ["Je louchais, moi ?", "Revieeens !", "Elle était mignonne.",
+                       "Mes yeux sont revenus ?"],
 }
 NEED_PHRASE = {"satiete": "hungry", "hydratation": "thirsty",
                "bonheur": "bored", "energie": "tired"}

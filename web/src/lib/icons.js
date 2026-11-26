@@ -302,4 +302,15 @@ export const ICONS = {
     "D........",
     ".DDDDDDDD",
   ],
+  eyes: [
+    ".KKK.KKK.",
+    "KSSEKESSK",
+    "KSSEKESSK",
+    "KSSSKSSSK",
+    ".KKK.KKK.",
+    "...k.k...",
+    "....k....",
+    "...RkR...",
+    "...RkR...",
+  ],
 };

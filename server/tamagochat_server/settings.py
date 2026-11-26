@@ -40,7 +40,7 @@ MESSAGE_TTL = 7 * 86400
 STAT_KEYS = ("satiete", "hydratation", "bonheur", "energie")
 ACTIONS = ("crazy", "flies", "sleep", "wake", "pet", "feed", "drink", "play", "meow",
            "crazy_xl", "swarm", "love", "jump", "drop", "screen", "mouse", "hide",
-           "groom", "stretch", "sneeze", "chase_tail")
+           "groom", "stretch", "sneeze", "chase_tail", "cross_eyed")
 SIZES = ("Petit", "Moyen", "Grand")
 MAX_PHRASES_JSON = 200_000
 HEX32 = re.compile(r"^[0-9a-f]{32}$")

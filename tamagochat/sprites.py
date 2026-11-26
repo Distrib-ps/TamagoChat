@@ -278,6 +278,56 @@ def make_groom(frame):
     return points(canvas, [(11, 12, "P"), (12, 12, "P"), (12, 13, "P")])
 
 
+def _wide_eyes(look):
+    """Grands yeux blancs (3 x 3) et pupilles de 1 x 2 pixels.
+    look : "center" (regarde devant), "in" (louche), "down" (louche sur le bout du nez)."""
+    pts = []
+    for left, right in ((4, 6), (17, 19)):           # colonnes de chaque oeil
+        pts += [(x, y, "S") for x in range(left, right + 1) for y in (7, 8, 9)]
+        inner = right if left == 4 else left           # côté du nez
+        if look == "center":
+            px, rows = left + 1, (7, 8)
+        elif look == "in":
+            px, rows = inner, (7, 8)
+        else:
+            px, rows = inner, (8, 9)
+        pts += [(px, y, "E") for y in rows]
+    return pts
+
+
+def make_cross_eyed(look, mouth="normal"):
+    """Assis, grands yeux qui suivent quelque chose jusqu'à son nez (et louchent dessus)."""
+    canvas = pad([], 31, 24)
+    canvas = overlay(canvas, TAIL_UP, 21, 12)
+    canvas = overlay(canvas, SIT_BODY, 0, 0)
+    pts = _wide_eyes(look) + FACE_NOSE
+    pts += FACE_MOUTH_OPEN if mouth == "open" else FACE_MOUTH
+    return points(canvas, pts)
+
+
+# coccinelle (vue de dessus) qui vient se poser sur son nez
+LADYBUG = [
+    "..k.k..",
+    "...k...",
+    "..kkk..",
+    ".RrkRR.",
+    "RkRkRkR",
+    "RRRkRRR",
+    ".RkRkR.",
+    "..RRR..",
+]
+LADYBUG_FLY = [                     # ailes ouvertes
+    "..k.k..",
+    "FF.k.FF",
+    "FFkkkFF",
+    ".RrkRR.",
+    "RkR.RkR",
+    "RRR.RRR",
+    ".RkRkR.",
+    "..R.R..",
+]
+
+
 def make_stretch(extra, yawn=False):
     """S'étire vers le haut : buste allongé de `extra` lignes (sprite plus haut que 24)."""
     torso = SIT_BODY[15:17]       # lignes du buste sans encoche : on peut les répéter

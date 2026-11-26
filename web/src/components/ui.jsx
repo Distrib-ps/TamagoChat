@@ -5,7 +5,7 @@ export const cx = (...classes) => classes.filter(Boolean).join(" ");
 const runsCache = {};
 // Icônes au corps blanc (enveloppe, bulle) : leur contour reste brun, comme un autocollant, sinon
 // en sombre le contour crème se confond avec le blanc et l'icône devient un rectangle.
-const PAPER_ICONS = new Set(["message", "phrases"]);
+const PAPER_ICONS = new Set(["message", "phrases", "eyes"]);
 // Le contour (K) des autres icônes suit la couleur du texte : brun en clair, crème en sombre.
 function iconRuns(name) {
   const outline = PAPER_ICONS.has(name) ? "var(--color-line)" : "currentColor";

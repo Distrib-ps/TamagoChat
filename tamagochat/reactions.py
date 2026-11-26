@@ -8,9 +8,14 @@ import random
 from . import sprites as sp
 from .config import CH, FPS, SIDE, TOP
 
-REACTIONS = ("groom", "stretch", "sneeze", "chase_tail")
+REACTIONS = ("groom", "stretch", "sneeze", "chase_tail", "cross_eyed")
 REACTION_LABELS = {"groom": "Faire sa toilette", "stretch": "S'étirer",
-                   "sneeze": "Éternuer", "chase_tail": "Courir après sa queue"}
+                   "sneeze": "Éternuer", "chase_tail": "Courir après sa queue",
+                   "cross_eyed": "Loucher sur une coccinelle"}
+# coccinelle : posée sur son nez (coin haut gauche du sprite, en pixels du canvas) et étapes
+BUG_REST = (SIDE + 8, TOP + 3)
+BUG_LAND, BUG_LEAVE, BUG_GONE = int(1.2 * FPS), int(3.2 * FPS), int(4.0 * FPS)
+BUG_END = int(4.4 * FPS)
 STRETCH_MAX = 6          # lignes de pixels gagnées au plus fort de l'étirement
 
 
@@ -19,7 +24,7 @@ class ReactionsMixin:
         """Réaction spontanée : plutôt un étirement (et un bâillement) quand il est fatigué."""
         tired = self.stats["energie"] < 40
         weights = {"groom": 40, "stretch": 45 if tired else 25, "sneeze": 10,
-                   "chase_tail": 5 if tired else 25}
+                   "chase_tail": 5 if tired else 25, "cross_eyed": 15}
         return random.choices(list(weights), weights=list(weights.values()))[0]
 
     def start_reaction(self, kind=None, quiet=False):
@@ -44,6 +49,11 @@ class ReactionsMixin:
         elif kind == "sneeze":
             self.set_state("sneeze", int(2.2 * FPS))
             self.say_text(random.choice(["A... a...", "Ah... aah...", "Aaah..."]), secs=1.2)
+        elif kind == "cross_eyed":
+            side = random.choice((-1, 1))         # elle arrive d'un côté et repart de l'autre
+            self.ladybug = {"from": (BUG_REST[0] + side * 16, BUG_REST[1] - 16),
+                            "to": (BUG_REST[0] - side * 18, BUG_REST[1] - 18)}
+            self.set_state("cross_eyed", BUG_END)
         elif kind == "chase_tail":
             self.chase_spin = random.randint(int(2.5 * FPS), int(3.5 * FPS))
             self.set_state("chase_tail", self.chase_spin + int(1.6 * FPS))
@@ -103,6 +113,30 @@ class ReactionsMixin:
             self.change("energie", -3)
             self.end_reaction()
 
+    def st_cross_eyed(self):
+        if self.st_t == BUG_LAND:
+            self.say("cross_eyed", chance=0.8)
+        if self.st_t >= self.st_len:
+            self.ladybug = None
+            self.change("bonheur", 3)
+            self.say("cross_eyed_end", chance=0.5)
+            self.end_reaction()
+
+    def ladybug_pose(self):
+        """(x, y, en vol ?) de la coccinelle, en pixels du canvas, selon l'avancement."""
+        t, bug = self.st_t, self.ladybug
+        if t < BUG_LAND:                          # elle arrive en volant
+            k = t / BUG_LAND
+            k = 1 - (1 - k) ** 2                  # elle ralentit en se posant
+            (x0, y0), (x1, y1) = bug["from"], BUG_REST
+        elif t < BUG_LEAVE:
+            return BUG_REST[0], BUG_REST[1], False
+        else:                                     # elle repart
+            k = min(1.0, (t - BUG_LEAVE) / (BUG_GONE - BUG_LEAVE))
+            k = k * k
+            (x0, y0), (x1, y1) = BUG_REST, bug["to"]
+        return x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, True
+
     def purr(self):
         """Ronronnement pendant les caresses : le chat vibre très légèrement."""
         if self.st_t % 2 == 0:
@@ -126,6 +160,17 @@ class ReactionsMixin:
                         lambda: sp.make_sit("closed", mouth, "up"), 0)
             return (("sit", "closed", "open", "side", False),
                     lambda: sp.make_sit("closed", "open", "side"), 0)
+        if st == "cross_eyed":
+            t0 = self.st_t
+            if t0 < BUG_LAND * 0.45 or t0 >= BUG_GONE:
+                look = "center"                   # il la voit arriver / la regarde partir
+            elif t0 < BUG_LAND or t0 >= BUG_LEAVE:
+                look = "in"
+            else:                                 # posée sur son nez : il louche, ses yeux tremblotent
+                look = "in" if (t0 // 7) % 5 == 0 else "down"
+            mouth = "open" if BUG_LAND <= t0 < BUG_LAND + 8 else "normal"     # « oh ! »
+            return (("louche", look, mouth),
+                    lambda: sp.make_cross_eyed(look, mouth), 0)
         if st == "chase_tail":
             if self.st_t < self.chase_spin:          # il tourne sur lui-même
                 self.facing = "right" if (t // 3) % 2 else "left"
@@ -134,3 +179,14 @@ class ReactionsMixin:
             return (("sit", "cross", "open", "side", False),
                     lambda: sp.make_sit("cross", "open", "side"), 0)
         return None
+
+    def reaction_extras(self):
+        """Ce qui se dessine par-dessus le chat pendant une réaction (la coccinelle)."""
+        if self.state != "cross_eyed" or not self.ladybug or self.st_t >= BUG_GONE:
+            return []
+        x, y, flying = self.ladybug_pose()
+        if flying:
+            frame = (self.t // 2) % 2           # battements d'ailes
+            rows = sp.LADYBUG_FLY if frame else sp.LADYBUG
+            return [(("ladybug", frame), lambda rows=rows: rows, x, y)]
+        return [(("ladybug", 0), lambda: sp.LADYBUG, x, y)]

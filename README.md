@@ -18,9 +18,9 @@
 ---
 
 Minou se promène au-dessus de la barre des tâches (Windows) ou du Dock (macOS). On le caresse, on le
-nourrit, il parle, chasse les mouches, fait sa toilette, s'étire, éternue, court après sa queue et pique
-des crises de folie. Avec le serveur optionnel, on peut
-aussi lui envoyer des messages et des bêtises à distance depuis une page web.
+nourrit, il parle, chasse les mouches, fait sa toilette, s'étire, éternue, court après sa queue, louche
+sur une coccinelle et pique des crises de folie. Avec le serveur optionnel, on peut aussi lui envoyer
+des messages et des bêtises à distance depuis une page web.
 
 ## Fonctionnalités
 
@@ -130,7 +130,7 @@ tamagochat/
 ├── behavior.py          comportement autonome : jauges, paroles, décisions, états
 ├── actions.py           soins, jeux et pouvoirs envoyés depuis la page admin
 ├── hunt.py, fly.py      chasse aux mouches
-├── reactions.py         toilette, étirement, atchoum, course après sa queue
+├── reactions.py         toilette, étirement, atchoum, course après sa queue, coccinelle
 ├── render.py            dessin en pixel art (sprites.py)
 ├── bubble.py            bulle de dialogue
 ├── menu.py              contenu du menu du clic droit
@@ -186,7 +186,7 @@ Un petit serveur Linux (un VPS suffit, ~40 Mo de RAM) avec nginx apporte :
 
 - **la page admin** `https://<serveur>/admin`, protégée par mot de passe : messages, soins, bêtises
   (folie XXL, nuée de mouches, grand saut, chute du ciel, changement d'écran, chasse à la souris,
-  cache-cache), réactions (toilette, étirement, atchoum, course après sa queue), réglages, jauges,
+  cache-cache), réactions (toilette, étirement, atchoum, course après sa queue, loucher), réglages, jauges,
   phrases et réponses des amis ;
 - **la distribution des mises à jour**, toujours vérifiées par leur signature.
 
