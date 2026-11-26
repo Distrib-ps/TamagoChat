@@ -108,7 +108,17 @@ python -m unittest discover -s tests    # tests
 > les fenêtres transparentes.
 
 Sans `local_config.py`, le chat fonctionne entièrement hors ligne. Pour le relier à un serveur, copiez
-`local_config.example.py` en `local_config.py` et remplissez-le.
+`local_config.example.py` en `local_config.py` et remplissez-le (adresse du serveur et clé publique
+de signature : rien de secret ; à la compilation, GitHub Actions le génère depuis ses secrets).
+
+Le serveur et sa page admin se testent aussi en local, avec des chats de démo :
+
+```bash
+cd web && npm install && npm run dev    # Node.js 22+ : API + page admin, mot de passe « admin »
+```
+
+Voir [web/README.md](web/README.md) (le front) et [server/README.md](server/README.md) (l'API :
+fonctionnement, configuration, mise à jour du VPS).
 
 <details>
 <summary><b>Organisation du code</b></summary>
@@ -133,7 +143,8 @@ tamagochat/
     ├── windows.py
     └── macos.py
 tests/                   tests unitaires
-serveur/                 serveur aiohttp + SQLite, page admin, systemd, nginx
+server/                  API aiohttp + SQLite (voir server/README.md)
+web/                     page admin : front Preact + Vite de l'API (voir web/README.md)
 ```
 
 </details>
@@ -200,16 +211,17 @@ Conservez `SIGNING_KEY` en lieu sûr : sans elle, impossible de publier une mise
 
 Sans nom de domaine, [sslip.io](https://sslip.io) en fournit un à partir de l'IP : `1.2.3.4` → `1-2-3-4.sslip.io`.
 
-Copiez le dossier `serveur/` sur la machine, placez-vous dedans, puis remplacez `MON-DOMAINE` et
-`MOT-DE-PASSE` :
+Compilez la page admin sur votre ordinateur (`cd web && npm ci && npm run build`), copiez le projet
+sur la machine (au moins `server/`, `web/dist` et `tamagochat/ed25519.py`), placez-vous dans `server/`, puis remplacez `MON-DOMAINE` et `MOT-DE-PASSE` :
 
 ```bash
 sudo apt install -y python3-venv nginx certbot
 sudo useradd --system --home /opt/minou-server --shell /usr/sbin/nologin minou
 sudo mkdir -p /opt/minou-server /var/www/minou-acme
-sudo cp server.py admin.html requirements.txt ../tamagochat/ed25519.py /opt/minou-server/
-sudo cp minou-server.service /etc/systemd/system/
-sed 's/TON-DOMAINE/MON-DOMAINE/g' nginx-minou.conf | sudo tee /etc/nginx/sites-available/minou > /dev/null
+sudo cp -r server.py tamagochat_server requirements.txt ../tamagochat/ed25519.py /opt/minou-server/
+sudo cp -r ../web/dist /opt/minou-server/web
+sudo cp deploy/minou-server.service /etc/systemd/system/
+sed 's/TON-DOMAINE/MON-DOMAINE/g' deploy/nginx-minou.conf | sudo tee /etc/nginx/sites-available/minou > /dev/null
 
 cd /opt/minou-server
 sudo python3 -m venv venv
@@ -231,8 +243,8 @@ sudo nginx -t && sudo systemctl reload nginx
 La page `https://MON-DOMAINE/admin` est alors accessible. Les données sont dans
 `/opt/minou-server/minou.db`. Relancer `set-password` change le mot de passe et déconnecte les sessions.
 
-**Mise à jour du serveur** : recopier `server.py`, `admin.html` et `../tamagochat/ed25519.py` dans
-`/opt/minou-server/` (ainsi que `nginx-minou.conf` s'il a changé), puis `sudo systemctl restart minou-server`.
+**Mise à jour du serveur** : sauvegarde, copie, vérification (`server.py check`) puis redémarrage,
+voir [server/README.md](server/README.md#mettre-à-jour-le-serveur-sur-le-vps).
 
 </details>
 
