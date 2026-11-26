@@ -70,6 +70,14 @@ class TestReactions(unittest.TestCase):
             self.assertIn(f'["{kind}"', admin)
 
 
+class TestMenuIcons(unittest.TestCase):
+    def test_icons_are_square_and_use_the_palette(self):
+        from tamagochat.icons import ICONS, SIZE
+        for name, rows in ICONS.items():
+            self.assertEqual((len(rows), {len(r) for r in rows}), (SIZE, {SIZE}), name)
+            self.assertTrue(set("".join(rows)) <= set(sprites.PALETTE) | {"."}, name)
+
+
 class TestPhrases(unittest.TestCase):
     def test_every_category_has_phrases(self):
         self.assertEqual({k for k, _ in PHRASE_CATEGORIES}, set(PHRASES))

@@ -95,6 +95,14 @@ def keep_on_top(widgets):
             pass
 
 
+user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
+user32.GetAsyncKeyState.restype = ctypes.c_short
+
+
+def mouse_buttons_down():
+    return any(user32.GetAsyncKeyState(vk) & 0x8000 for vk in (0x01, 0x02, 0x04))
+
+
 def set_dpi_aware():
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)

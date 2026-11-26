@@ -40,7 +40,7 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
         self.dpi = desktop.dpi_scale(r)
         self.runs = {}                       # segments de pixels par sprite (voir render.py)
         self.chase_spin = 0                  # durée de la course après sa queue (reactions.py)
-        self.menu_open = False
+        self.menu, self.menu_open = None, False
         self.scene, self.last_scene = [], None
 
         self.canvas = tk.Canvas(r, bg=desktop.BG, highlightthickness=0, bd=0, cursor="hand2")
@@ -280,6 +280,9 @@ class App(BehaviorMixin, ActionsMixin, HuntMixin, ReactionsMixin, RemoteMixin, R
 
     # ---------------------------------------------------------- souris
     def on_press(self, e):
+        if self.menu_open:                # ce clic ferme le menu, sans caresser le chat
+            self.close_menu()
+            return
         self.drag = {"sx": e.x_root, "sy": e.y_root, "x": self.x, "y": self.y, "moved": False}
         self.drag_hist = [(time.time(), e.x_root, e.y_root)]
 

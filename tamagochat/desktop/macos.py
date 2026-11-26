@@ -61,6 +61,14 @@ def keep_on_top(widgets):
             pass
 
 
+def mouse_buttons_down():
+    try:
+        o = _init_objc()
+        return bool(o["send_ulong"](o["cls"]("NSEvent"), o["sel"]("pressedMouseButtons")))
+    except Exception:
+        return False
+
+
 def set_dpi_aware():
     pass
 
